@@ -1,0 +1,43 @@
+/*
+===============================================================================
+SQL BOOTCAMP: 05-PERFORMANCE & OPTIMIZATION (20 CHALLENGES)
+PROJECT:       AdventureWorks Mastery Lab
+AUTHOR:        emdej111 - Monika Jurak
+DATE:          07-01-2026
+DESCRIPTION:   Understanding Execution Plans, Indexing, and SARGability.
+INSTRUCTIONS:  Solve each task. Use 'Include Actual Execution Plan' (Ctrl+M) in SSMS.
+===============================================================================
+*/
+
+-- ============================================================================
+-- LEVEL 12: EXECUTION PLANS & INDEXING (10 TASKS)
+-- ============================================================================
+
+-- 01. Run a SELECT * on Sales.SalesOrderHeader and look at the Execution Plan. 
+--     Identify the "Clustered Index Scan" operator.
+-- 02. Run a SELECT on a specific SalesOrderID. Observe how the operator 
+--     changes to "Clustered Index Seek".
+-- 03. Compare the "Estimated Cost" of a query before and after adding a WHERE clause on a non-indexed column.
+-- 04. Find all indexes on the Production.Product table using 'sp_helpindex'.
+-- 05. Create a Non-Clustered index on the 'Name' column of Production.Product and measure the speed gain.
+-- 06. Identify a "Key Lookup" in an execution plan and research why it happens.
+-- 07. Use the 'SET STATISTICS IO ON' command to see how many logical reads your query performs.
+-- 08. Compare the performance of a JOIN vs. a Subquery for the same result set.
+-- 09. Research "Index Fragmentation" and find the command to check fragmentation levels for AdventureWorks tables.
+-- 10. Drop a Non-Clustered index you created and observe the performance impact on a search query.
+
+-- ============================================================================
+-- LEVEL 13: SARGability & QUERY REFACTORING (10 TASKS)
+-- ============================================================================
+
+-- 11. REFACTOR: Change a query that uses 'WHERE YEAR(OrderDate) = 2011' 
+--     to a SARGable version using 'OrderDate >= ... AND OrderDate < ...'.
+-- 12. REFACTOR: Avoid using 'LIKE %Term%' (leading wildcard) and compare it with 'LIKE Term%'.
+-- 13. Compare the performance of 'SELECT *' vs. 'SELECT Column1, Column2' on a table with many columns.
+-- 14. Identify the "Implicit Conversion" warning in an execution plan (e.g., comparing VARCHAR to NVARCHAR).
+-- 15. Use 'UNION ALL' instead of 'UNION' and observe the removal of the "Sort (Distinct Scan)" operator.
+-- 16. Research why using 'NOT IN' with NULL values can be slow and problematic.
+-- 17. Refactor a query to use a Temp Table (#Temp) instead of a complex nested subquery and compare IO statistics.
+-- 18. Use 'EXISTS' instead of 'COUNT(*) > 0' to check for record existence and check the execution plan.
+-- 19. Identify a "Table Scan" in a large table and explain why it is generally bad for performance.
+-- 20. Run a query with 'OPTION (RECOMPILE)' and research when this hint should be used.

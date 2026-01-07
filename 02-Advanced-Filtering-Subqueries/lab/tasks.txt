@@ -1,0 +1,60 @@
+/*
+===============================================================================
+SQL BOOTCAMP: 02-ADVANCED FILTERING & SUBQUERIES (40 CHALLENGES)
+PROJECT:       AdventureWorks Mastery Lab
+AUTHOR:        emdej111 - Monika Jurak
+DATE:          07-01-2026
+DESCRIPTION:   Mastering nested queries, set operators, and complex filtering.
+INSTRUCTIONS:  Solve each task below the comment.
+===============================================================================
+*/
+
+-- ============================================================================
+-- LEVEL 5: SUBQUERIES (NESTED SELECTS) - (20 TASKS)
+-- ============================================================================
+
+-- 01. Find all products whose ListPrice is greater than the average ListPrice of all products.
+-- 02. List names of products that have been sold at least once (Use IN with a subquery on SalesOrderDetail).
+-- 03. Find the names of employees who have the same JobTitle as 'Ken Sanchez' (BusinessEntityID = 1).
+-- 04. Use a subquery in the SELECT clause to show each product's price vs. the maximum price in the table.
+-- 05. Find customers who have placed more than 10 orders (Use a subquery in the WHERE clause).
+-- 06. Find products that have never been ordered (Use NOT IN with a subquery on SalesOrderDetail).
+-- 07. Find the salesperson(s) with the highest bonus (Use a subquery to find MAX bonus).
+-- 08. List products that belong to the 'Bikes' category (Get CategoryID via subquery from ProductCategory).
+-- 09. Find orders where the TotalDue is higher than the average TotalDue for that specific year.
+-- 10. List all persons who are also recorded as Employees (Use IN with BusinessEntityID).
+-- 11. Find products whose price is higher than the average price of products in subcategory 1.
+-- 12. Show the Name of the product and its total quantity sold (Use a subquery in the SELECT clause).
+-- 13. Find the most recent order date for each customer (Use a correlated subquery).
+-- 14. List departments that have more than 5 employees (Subquery on EmployeeDepartmentHistory).
+-- 15. Find employees who earn more than the average rate in their specific department.
+-- 16. Find the name of the territory with the lowest total sales.
+-- 17. List products that have a standard cost lower than the product with ProductID = 707.
+-- 18. Find the top 3 selling products for each territory (Harder - requires thinking about correlated subqueries).
+-- 19. Show each SalesOrderID and the name of the person who placed it (Subquery on Person).
+-- 20. Find customers who placed an order in 2011 but NOT in 2012.
+
+-- ============================================================================
+-- LEVEL 6: SET OPERATORS & EXISTENCE CHECKS (20 TASKS)
+-- ============================================================================
+
+-- 21. Use UNION to combine a list of all Product Names and all Category Names into one column.
+-- 22. Use UNION ALL to combine the same list and notice the difference in record count.
+-- 23. Use INTERSECT to find BusinessEntityIDs that appear in both the Employee and SalesPerson tables.
+-- 24. Use EXCEPT to find BusinessEntityIDs that are Employees but NOT SalesPersons.
+-- 25. Use EXISTS to find all products that have a recorded inventory level in Production.ProductInventory.
+-- 26. Use NOT EXISTS to find products that have NO inventory records.
+-- 27. Combine a list of FirstNames from Person and JobTitles from Employee into one result set (UNION).
+-- 28. Find cities where both a Customer and a Vendor are located (INTERSECT on Address/City).
+-- 29. List all products that are NOT 'Red' and also NOT 'Black' using EXCEPT with two SELECTs.
+-- 30. Use EXISTS to find customers who have placed at least one order with a TotalDue > 10000.
+-- 31. Create a union of all 'Silver' products and all 'Black' products.
+-- 32. Find names of employees who have NEVER changed their department (Use NOT EXISTS on History table).
+-- 33. Find territories that have sales in 2013 but had NO sales in 2011 (EXCEPT).
+-- 34. Use UNION to list all distinct cities from both the Person.Address and Sales.SalesTerritory tables.
+-- 35. Find products sold in territory 1 but not in territory 10 (EXCEPT).
+-- 36. Use EXISTS to find products that were sold in the month of December.
+-- 37. List all managers (BusinessEntityID) who have at least one direct report (EXISTS on Employee.ManagerID).
+-- 38. Use INTERSECT to find colors that exist in both the Product and ProductModel tables.
+-- 39. Use UNION to create a master list of all unique IDs (BusinessEntityID) from Person, Employee, and Vendor.
+-- 40. Find orders where all items in the order have a unit price > 100 (Use NOT EXISTS to find orders where NO item is < 100).

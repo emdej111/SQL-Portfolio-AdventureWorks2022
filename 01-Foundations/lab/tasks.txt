@@ -1,0 +1,90 @@
+/*
+===============================================================================
+SQL BOOTCAMP: 01-FOUNDATIONS (60 CHALLENGES)
+PROJECT:       AdventureWorks Mastery Lab
+AUTHOR:        emdej111 - Monika Jurak
+DATE:          07-01-2026
+DESCRIPTION:   Extensive practice covering all foundational SQL concepts.
+INSTRUCTIONS:  Solve each task below the comment.
+===============================================================================
+*/
+
+-- ============================================================================
+-- LEVEL 1: SELECT, WHERE & SORTING (15 TASKS)
+-- ============================================================================
+
+-- 01. Retrieve all columns from Production.Product.
+-- 02. Display only Name, ProductNumber, and Color for all products.
+-- 03. Find products with a ListPrice greater than 1000.
+-- 04. Find products that are 'Red'.
+-- 05. List products where the size is 'L'.
+-- 06. Find products with a ListPrice between 500 and 1500.
+-- 07. Find products where the color is NULL.
+-- 08. Find products where the color is NOT NULL.
+-- 09. List all 'Silver' or 'Black' products.
+-- 10. Find products where Name starts with 'Mountain'.
+-- 11. Find products where Name contains the word 'Bike'.
+-- 12. List all products from Production.Product sorted by Name (A-Z).
+-- 13. List all products sorted by ListPrice from most expensive to cheapest.
+-- 14. Find the top 10 most expensive products.
+-- 15. Find the top 5 cheapest products that are not free (Price > 0).
+
+-- ============================================================================
+-- LEVEL 2: STRING & NUMERIC FUNCTIONS (15 TASKS)
+-- ============================================================================
+
+-- 16. Concatenate FirstName and LastName with a space in between.
+-- 17. Display the length (LEN) of each product name.
+-- 18. Convert all JobTitles in HumanResources.Employee to UPPERCASE.
+-- 19. Convert all EmailAddresses in Person.EmailAddress to lowercase.
+-- 20. Extract the first 3 characters of each ProductNumber (LEFT).
+-- 21. Extract the last 4 characters of each ProductNumber (RIGHT).
+-- 22. Round the StandardCost of each product to 2 decimal places.
+-- 23. Round the StandardCost to the nearest whole number (0 decimals).
+-- 24. Replace 'Road' with 'Street' in the Name column of Production.Product.
+-- 25. Use SUBSTRING to get characters 2 through 5 of the ProductNumber.
+-- 26. Find all people where the FirstName is exactly 5 characters long.
+-- 27. Show a column with Name and a second column where Name is reversed (REVERSE).
+-- 28. Calculate the square root of the ListPrice (SQRT).
+-- 29. Use ABS to show the absolute value of -100 (dummy test).
+-- 30. Combine FirstName, a comma, and LastName into a single 'Label' column.
+
+-- ============================================================================
+-- LEVEL 3: DATES & TIME CALCULATIONS (15 TASKS)
+-- ============================================================================
+
+-- 31. Display the current date and time using GETDATE().
+-- 32. Extract only the YEAR from the HireDate of employees.
+-- 33. Extract the MONTH (as a number) from the HireDate.
+-- 34. Extract the DAY of the month from the BirthDate.
+-- 35. Use DATENAME to show the name of the month for each HireDate (e.g., 'July').
+-- 36. Use DATENAME to show which day of the week someone was hired (e.g., 'Friday').
+-- 37. Calculate the difference in years between BirthDate and today (Age).
+-- 38. Calculate the difference in days between OrderDate and ShipDate.
+-- 39. Add 30 days to the OrderDate to show a 'PaymentDueDate'.
+-- 40. Subtract 1 year from the HireDate to show a 'ProbationStartDate'.
+-- 41. Format the OrderDate as 'yyyy/MM/dd'.
+-- 42. Format the BirthDate as 'MMMM dd, yyyy'.
+-- 43. Find all employees hired in the year 2009.
+-- 44. Find all sales orders placed in the month of May (any year).
+-- 45. Find all employees born on a Tuesday.
+
+-- ============================================================================
+-- LEVEL 4: AGGREGATIONS, GROUP BY & JOINS (15 TASKS)
+-- ============================================================================
+
+-- 46. Count the total number of products in the database.
+-- 47. Find the total sum of all Sales in Sales.SalesOrderHeader (TotalDue).
+-- 48. Calculate the average ListPrice of all products.
+-- 49. Find the maximum and minimum ListPrice in the system.
+-- 50. Count how many products exist for each Color (GROUP BY Color).
+-- 51. Calculate the average price per ProductSubcategoryID.
+-- 52. Show only colors that have more than 20 products (HAVING).
+-- 53. JOIN Person.Person and HumanResources.Employee on BusinessEntityID.
+-- 54. JOIN Product and ProductSubcategory to show Product Name and Category Name.
+-- 55. JOIN Sales.SalesOrderHeader and Sales.SalesTerritory to show Territory Name for each order.
+-- 56. JOIN Employee and EmployeeDepartmentHistory to see who works in which DepartmentID.
+-- 57. Use a LEFT JOIN between Product and SalesOrderDetail to find products never sold.
+-- 58. Calculate the total weight of products in each Color category.
+-- 59. Find the total number of orders placed by each CustomerID.
+-- 60. JOIN Person.Person, BusinessEntityAddress, and Address to show City for each person.

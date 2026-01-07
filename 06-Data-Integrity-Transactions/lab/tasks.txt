@@ -1,0 +1,50 @@
+/*
+===============================================================================
+SQL BOOTCAMP: 06-DATA INTEGRITY & TRANSACTIONS (20 CHALLENGES)
+PROJECT:       AdventureWorks Mastery Lab
+AUTHOR:        emdej111 - Monika Jurak
+DATE:          07-01-2026
+DESCRIPTION:   Mastering Transactions, Error Handling, and Constraints.
+INSTRUCTIONS:  Solve each task. Use BEGIN TRAN, COMMIT, and ROLLBACK carefully.
+===============================================================================
+*/
+
+-- ============================================================================
+-- LEVEL 14: TRANSACTIONS & ERROR HANDLING (10 TASKS)
+-- ============================================================================
+
+-- 01. Perform a basic UPDATE on a product price inside a transaction, 
+--     then use ROLLBACK and verify the price didn't change.
+-- 02. Perform the same UPDATE but use COMMIT and verify the change is permanent.
+-- 03. Use a TRY...CATCH block to handle a "Divide by Zero" error inside a script.
+-- 04. Write a transaction that attempts to delete a product that has sales history. 
+--     Catch the Foreign Key error and print a custom message.
+-- 05. Use 'XACT_STATE()' to check if a transaction is still valid after an error.
+-- 06. Create a "Nested Transaction" (Transaction inside a Transaction) and 
+--     research how @@TRANCOUNT works.
+-- 07. Use 'SAVE TRANSACTION' to create a savepoint, perform an update, 
+--     rollback to the savepoint, and commit the rest.
+-- 08. Write a script that updates two different tables within one transaction. 
+--     Ensure if one fails, both rollback.
+-- 09. Research 'SET XACT_ABORT ON' and write a script demonstrating its effect.
+-- 10. Simulate a "Deadlock" scenario between two query windows (Theoretical or lab task).
+
+-- ============================================================================
+-- LEVEL 15: CONSTRAINTS & DATA VALIDATION (10 TASKS)
+-- ============================================================================
+
+-- 11. Create a dummy table with a PRIMARY KEY and try to insert a duplicate ID.
+-- 12. Add a CHECK constraint to your dummy table (e.g., Price > 0) and 
+--     test it with an invalid insert.
+-- 13. Create a FOREIGN KEY relationship between two dummy tables and 
+--     test referential integrity by deleting a parent row.
+-- 14. Use 'ALTER TABLE' to add a UNIQUE constraint to an Email column.
+-- 15. Research 'ON DELETE CASCADE' and demonstrate how it automatically 
+--     cleans up child records.
+-- 16. Use 'IDENTITY_INSERT ON' to manually insert a value into an Identity column.
+-- 17. Find all disabled constraints in the AdventureWorks database using a system view.
+-- 18. Write a script that uses 'RAISERROR' or 'THROW' to stop execution if 
+--     a business condition is met (e.g., trying to sell more stock than available).
+-- 19. Identify all tables in AdventureWorks that have a 'CHECK' constraint.
+-- 20. Research the difference between 'DELETE' and 'TRUNCATE' in terms of 
+--     transaction logging and identity resets.
