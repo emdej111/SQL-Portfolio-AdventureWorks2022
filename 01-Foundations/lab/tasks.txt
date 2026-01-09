@@ -14,20 +14,64 @@ INSTRUCTIONS:  Solve each task below the comment.
 -- ============================================================================
 
 -- 01. Retrieve all columns from Production.Product.
+SELECT * FROM Production.Product;
+
 -- 02. Display only Name, ProductNumber, and Color for all products.
+SELECT Name, ProductNumber, Color FROM Production.Product;
+
 -- 03. Find products with a ListPrice greater than 1000.
+SELECT Name, ProductID, ListPrice  FROM Production.Product
+WHERE ListPrice > 1000;
+
 -- 04. Find products that are 'Red'.
+SELECT Name, Color  FROM Production.Product 
+WHERE Color = 'Red';
+
 -- 05. List products where the size is 'L'.
+SELECT Name, Size  FROM Production.Product  
+WHERE Size = 'L';
+
 -- 06. Find products with a ListPrice between 500 and 1500.
+SELECT Name, ProductID, ListPrice  FROM Production.Product
+WHERE ListPrice BETWEEN 500 AND 1500;
+
 -- 07. Find products where the color is NULL.
+SELECT Name, Color  FROM Production.Product
+WHERE Color IS NULL; -- NULL cannot be compared using the equality operator (=) --> IS / IS NOT
+
 -- 08. Find products where the color is NOT NULL.
+SELECT Name, Color  FROM Production.Product
+WHERE Color IS NOT NULL;
+
 -- 09. List all 'Silver' or 'Black' products.
+SELECT Name, Color  FROM Production.Product
+WHERE Color = 'Silver' 
+OR Color = 'Black'; -- OR cannot be used because it returns only one of the walues if it exists
+
 -- 10. Find products where Name starts with 'Mountain'.
+SELECT Name, ProductID FROM Production.Product
+WHERE Name LIKE 'mountain%';
+
 -- 11. Find products where Name contains the word 'Bike'.
+SELECT Name, ProductID FROM Production.Product
+WHERE Name LIKE '%bike%';
+
 -- 12. List all products from Production.Product sorted by Name (A-Z).
+SELECT * FROM Production.Product
+ORDER BY Name ASC;
+
 -- 13. List all products sorted by ListPrice from most expensive to cheapest.
+SELECT * FROM Production.Product
+ORDER BY ListPrice DESC;
+
 -- 14. Find the top 10 most expensive products.
+SELECT TOP 10 * FROM Production.Product
+ORDER BY ListPrice DESC; -- TOP goes right after the SELECT statement
+
 -- 15. Find the top 5 cheapest products that are not free (Price > 0).
+SELECT TOP 5 * FROM Production.Product
+WHERE ListPrice > 0
+ORDER BY ListPrice ASC;
 
 -- ============================================================================
 -- LEVEL 2: STRING & NUMERIC FUNCTIONS (15 TASKS)
