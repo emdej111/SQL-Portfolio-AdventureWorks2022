@@ -193,20 +193,121 @@ SELECT CONCAT(FirstName, ', ', LastName) AS FullName FROM Person.Person;
 -- ============================================================================
 
 -- 31. Display the current date and time using GETDATE().
+SELECT GETDATE() AS [CurrentSystemDateTime];
+/*
+The GETDATE() function returns the current database system timestamp as a datetime value. This value is derived from the operating system of the computer on which the instance of SQL Server is running.
+Syntax: SELECT GETDATE() [AS AliasName];
+*/
+
 -- 32. Extract only the YEAR from the HireDate of employees.
+SELECT * FROM HumanResources.Employee;
+SELECT BusinessEntityID,YEAR(HireDate) AS HireYear FROM HumanResources.Employee;
+/*
+The YEAR() function returns an integer that represents the year of a specified date.
+Syntax: SELECT YEAR(date_column) AS AliasName FROM Schema.TableName;
+*/
+
 -- 33. Extract the MONTH (as a number) from the HireDate.
+SELECT BusinessEntityID,HireDate, MONTH(HireDate) AS HireMonth FROM HumanResources.Employee;
+
 -- 34. Extract the DAY of the month from the BirthDate.
+SELECT BusinessEntityID,HireDate, DAY(HireDate) AS HireDay FROM HumanResources.Employee;
+
 -- 35. Use DATENAME to show the name of the month for each HireDate (e.g., 'July').
+SELECT BusinessEntityID, 
+       HireDate, 
+       DATENAME(month, HireDate) AS MonthName
+FROM HumanResources.Employee;
+/*
+Definition: The DATENAME() function returns a character string that represents a specific part of a date (the datepart).
+The Difference: While the MONTH() function returns an integer (e.g., 7), DATENAME returns a string (e.g., 'July').
+Syntax: SELECT DATENAME(datepart, date_column) AS AliasName FROM Schema.TableName;
+*/
+
 -- 36. Use DATENAME to show which day of the week someone was hired (e.g., 'Friday').
+SELECT BusinessEntityID, 
+       HireDate, 
+       DATENAME(weekday, HireDate) AS WeekdayName -- When the weekday datepart is used, it returns the name of the day (e.g., Monday, Tuesday).
+FROM HumanResources.Employee;
+
 -- 37. Calculate the difference in years between BirthDate and today (Age).
+SELECT * FROM HumanResources.Employee;
+SELECT BusinessEntityID,
+       BirthDate,
+       GETDATE() AS Today,
+       DATEDIFF(year, BirthDate, GETDATE() ) AS Age
+FROM HumanResources.Employee;
+/*
+The DATEDIFF() function returns the count (as a signed integer) of the specified datepart boundaries crossed between a start date and an end date.
+It calculates how many "units" (years, months, days) fit between two dates. It always subtracts the second date from the third: End - Start.
+Syntax: SELECT DATEDIFF(datepart, startdate, enddate) AS AliasName FROM Schema.TableName;
+*/
+
 -- 38. Calculate the difference in days between OrderDate and ShipDate.
+SELECT * FROM Sales.SalesOrderHeader;
+SELECT OrderDate,
+       ShipDate, 
+       GETDATE() AS Today,
+       DATEDIFF(day, OrderDate, ShipDate) AS DaysToShip
+FROM Sales.SalesOrderHeader;
+
 -- 39. Add 30 days to the OrderDate to show a 'PaymentDueDate'.
+SELECT SalesOrderID, 
+       OrderDate, 
+       DATEADD(day, 30, OrderDate) AS PaymentDueDate
+FROM Sales.SalesOrderHeader;
+/*
+The DATEADD() function adds a specific number (interval) to a datepart of an input date and returns the new, updated date.
+datepart: The unit of time you want to add (e.g., day, month, year).
+number: The value used to increment the datepart. This is an integer (positive to go forward, negative to go back).
+date: The starting date or column you want to modify.
+Syntax: SELECT DATEADD(datepart, number, date) AS AliasName FROM Schema.TableName;
+*/
+
 -- 40. Subtract 1 year from the HireDate to show a 'ProbationStartDate'.
+SELECT BusinessEntityID, 
+       HireDate, 
+       DATEADD(year, -1, HireDate) AS ProbationStartDate -- -1: The negative value tells SQL Server to go back one interval
+FROM HumanResources.Employee;
+
 -- 41. Format the OrderDate as 'yyyy/MM/dd'.
+SELECT SalesOrderID, 
+       OrderDate, 
+       FORMAT(OrderDate, 'yyyy/MM/dd') AS FormattedDate
+FROM Sales.SalesOrderHeader;
+/*
+The FORMAT() function returns a value formatted with the specified format and optional culture. It is highly flexible because it uses standard .NET formatting strings.
+Unlike YEAR() or MONTH() which return numbers, FORMAT() always returns a string (text) formatted exactly how you defined it.
+Syntax: SELECT FORMAT(value, 'format_pattern') AS AliasName FROM Schema.TableName;
+value: The date or number you want to format.
+'format_pattern': A string that defines the output.
+    yyyy = 4-digit year
+    MM = 2-digit month (must be capital M, lowercase mm is for minutes!)
+    dd = 2-digit day
+*/
+
 -- 42. Format the BirthDate as 'MMMM dd, yyyy'.
+SELECT BusinessEntityID,
+       FORMAT(BirthDate, 'MMMM dd, yyyy') AS FormattedBirthDate
+FROM HumanResources.Employee;
+
 -- 43. Find all employees hired in the year 2009.
+SELECT BusinessEntityID, 
+       JobTitle, 
+       HireDate
+FROM HumanResources.Employee WHERE YEAR(HireDate) = 2009; 
+
 -- 44. Find all sales orders placed in the month of May (any year).
+SELECT SalesOrderID,
+       OrderDate, 
+       TotalDue
+FROM Sales.SalesOrderHeader
+WHERE MONTH(OrderDate) = 5; -- MONTH(OrderDate) = 5 AND YEAR(OrderDate) = 2011; in case of filtering the year as well
+
 -- 45. Find all employees born on a Tuesday.
+SELECT BusinessEntityID,
+       DATENAME(weekday, BirthDate) AS DayOfBirth
+FROM HumanResources.Employee WHERE DATENAME(weekday, BirthDate) = 'Tuesday';
 
 -- ============================================================================
 -- LEVEL 4: AGGREGATIONS, GROUP BY & JOINS (15 TASKS)
