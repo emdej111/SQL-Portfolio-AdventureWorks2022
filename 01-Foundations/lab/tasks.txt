@@ -78,20 +78,115 @@ ORDER BY ListPrice ASC;
 -- ============================================================================
 
 -- 16. Concatenate FirstName and LastName with a space in between.
+SELECT CONCAT(FirstName, ' ', LastName) AS FullName 
+FROM Person.Person;
+/*
+Concatenation is the operation of joining two or more character strings end-to-end
+Syntax:  SELECT CONCAT ( string1, string2, string3, ... ) AS AliasName FROM Schema.Table;
+*/
+
 -- 17. Display the length (LEN) of each product name.
+SELECT Name, LEN(Name) AS nameLength FROM  Production.Product;
+/*
+This function returns the number of characters of the specified string expression, excluding trailing blanks (spaces at the end of the string)
+Syntax: SELECT columnName, LEN(columnName) AS AliasName FROM scheme.tableName;
+*/
+
 -- 18. Convert all JobTitles in HumanResources.Employee to UPPERCASE.
+SELECT * FROM HumanResources.Employee;
+SELECT JobTitle, UPPER(JobTitle) AS uppersaseName FROM HumanResources.Employee;
+/*
+Returns a string expression with lowercase character data converted to uppercase.
+Syntax: SELECT colimnName, UPPER(columnName) AS aliasName FROM scheme.tableName;
+*/
+
 -- 19. Convert all EmailAddresses in Person.EmailAddress to lowercase.
+SELECT * FROM Person.EmailAddress;
+SELECT EmailAddress, LOWER(EmailAddress) AS lowercaseEmail FROM Person.EmailAddress;
+
 -- 20. Extract the first 3 characters of each ProductNumber (LEFT).
+SELECT * FROM Production.Product;
+SELECT LEFT(ProductNumber, 3) AS firstThreeChar FROM Production.Product;
+/*
+The LEFT() function returns a specified number of characters from the start (left side) of a character string.
+Syntax: SELECT LEFT(column_name, number_of_characters) AS AliasName FROM Schema.TableName;
+*/
+
 -- 21. Extract the last 4 characters of each ProductNumber (RIGHT).
+SELECT RIGHT(ProductNumber, 4) as lastFour FROM Production.Product;
+/*
+The RIGHT() function returns a specified number of characters from the end (right side) of a character string.
+Syntax: -- Syntax for RIGHT
+SELECT RIGHT(column_name, number_of_characters) AS AliasName FROM Schema.TableName;
+*/
+
 -- 22. Round the StandardCost of each product to 2 decimal places.
+SELECT ROUND(StandardCost, 2) AS roundToTwo FROM Production.Product;
+/*
+The ROUND() function is used to round a numeric value to a specified number of decimal places.
+Numeric_expression: The numeric value or column you want to round
+Length: The precision to which you want to round. A positive number rounds to that many decimal places.
+Function (Optional): If this is 0 (default), it rounds. If it's any other value, it truncates (cuts off) the decimals instead of rounding.
+Syntax: SELECT ROUND(numeric_expression, length, [function]) AS AliasName FROM Schema.TableName;
+*/
+
 -- 23. Round the StandardCost to the nearest whole number (0 decimals).
+SELECT Name, StandardCost, ROUND(StandardCost, 0) AS WholeStandardCost FROM Production.Product;
+
 -- 24. Replace 'Road' with 'Street' in the Name column of Production.Product.
+SELECT REPLACE(Name, 'Road', 'Street') AS newName FROM Production.Product
+WHERE Name LIKE '%Road%'; -- added WHERE clause to see the change more easily
+/*
+The REPLACE() function replaces all occurrences of a specified string value with another string value.
+string_expression: The string or column to be searched (e.g., Name).
+string_to_find: The substring to be found (e.g., 'Road').
+string_replacement: The replacement substring (e.g., 'Street').
+Syntax: SELECT REPLACE(string_expression, string_to_find, string_replacement) AS AliasName FROM Schema.TableName;
+*/
+
 -- 25. Use SUBSTRING to get characters 2 through 5 of the ProductNumber.
+SELECT SUBSTRING(ProductNumber, 2, 5) AS SubPart FROM Production.Product;
+/*
+The SUBSTRING() function extracts a specific portion of a string, starting at a designated position and continuing for a specified number of characters.
+expression: The string, column, or variable you want to extract from (e.g., ProductNumber).
+start: An integer that specifies where the extraction starts. Note: In SQL, the first character is position 1 (not 0 like in some other programming languages).
+length: A positive integer that specifies how many characters you want to take from that starting point.
+Syntax: SELECT SUBSTRING(expression, start, length) AS AliasName FROM Schema.TableName;
+*/
+
 -- 26. Find all people where the FirstName is exactly 5 characters long.
+SELECT * FROM Person.Person;
+SELECT FirstName, LastName FROM Person.Person WHERE LEN(FirstName) = 5;
+
 -- 27. Show a column with Name and a second column where Name is reversed (REVERSE).
+SELECT FirstName, REVERSE(FirstName) AS ReversedName FROM Person.Person;
+/*
+REVERSE() function takes a string and reverses the order of its characters.
+Syntax: SELECT ColumnName, REVERSE(ColumnName) AS AliasName FROM Schema.TableName;
+*/
+
 -- 28. Calculate the square root of the ListPrice (SQRT).
+-- 1st. way
+SELECT Name, ProductID, SQRT(ListPrice) AS SquareRootPrice FROM Production.Product;
+-- 2nd. way
+SELECT Name, ProductID, ROUND(SQRT(ListPrice), 2) AS CleanSquareRoot FROM Production.Product;
+/*
+The SQRT() function returns the square root of a specified numeric value (specifically a float).
+Mathematical Logic: It calculates what number, when multiplied by itself, gives the original number (e.g., SQRT(25) returns 5).
+Constraint: The input value must be a non-negative number. If you attempt to calculate the square root of a negative number, SQL Server will throw a "domain error".
+Syntax: SELECT SQRT(columnName) AS AliasName FROM Schema.TableName;
+*/
+
 -- 29. Use ABS to show the absolute value of -100 (dummy test).
+SELECT ABS(-100) AS AbsoluteValue;
+/*
+The ABS() function returns the absolute, positive value of a specified numeric expression.
+Syntax: SELECT ABS(numeric_expression) AS AliasName;
+*/
+
 -- 30. Combine FirstName, a comma, and LastName into a single 'Label' column.
+SELECT * FROM Person.Person;
+SELECT CONCAT(FirstName, ', ', LastName) AS FullName FROM Person.Person;
 
 -- ============================================================================
 -- LEVEL 3: DATES & TIME CALCULATIONS (15 TASKS)
