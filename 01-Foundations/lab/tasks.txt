@@ -145,7 +145,7 @@ Syntax: SELECT REPLACE(string_expression, string_to_find, string_replacement) AS
 */
 
 -- 25. Use SUBSTRING to get characters 2 through 5 of the ProductNumber.
-SELECT SUBSTRING(ProductNumber, 2, 5) AS SubPart FROM Production.Product;
+SELECT SUBSTRING(ProductNumber, 2, 4) AS SubPart FROM Production.Product;
 /*
 The SUBSTRING() function extracts a specific portion of a string, starting at a designated position and continuing for a specified number of characters.
 expression: The string, column, or variable you want to extract from (e.g., ProductNumber).
