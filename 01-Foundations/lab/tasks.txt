@@ -314,17 +314,136 @@ FROM HumanResources.Employee WHERE DATENAME(weekday, BirthDate) = 'Tuesday';
 -- ============================================================================
 
 -- 46. Count the total number of products in the database.
+SELECT COUNT(DISTINCT(ProductID)) FROM Production.Product;
+
 -- 47. Find the total sum of all Sales in Sales.SalesOrderHeader (TotalDue).
+SELECT * FROM Sales.SalesOrderHeader;
+SELECT SUM(TotalDue) AS TotalSum FROM Sales.SalesOrderHeader;
+
 -- 48. Calculate the average ListPrice of all products.
+SELECT AVG(ListPrice) AS averageListPrice FROM Production.Product;
+
 -- 49. Find the maximum and minimum ListPrice in the system.
+SELECT MIN(ListPrice) AS minPrice FROM Production.Product;
+SELECT MAX(ListPrice) AS maxPrice FROM Production.Product;
+
 -- 50. Count how many products exist for each Color (GROUP BY Color).
+SELECT Color, 
+       COUNT(*) AS productCount
+FROM Production.Product
+GROUP BY Color;
+/*
+GROUP BY splits the data into buckets (one for each color).
+COUNT(*) then counts how many rows are in each specific bucket.
+Note: NULL will also appear as a category if some products have no color.
+*/
+
 -- 51. Calculate the average price per ProductSubcategoryID.
+SELECT ProductSubcategoryID, 
+       AVG(ListPrice) AS averagePrice 
+FROM Production.Product
+GROUP BY ProductSubcategoryID;
+/*
+We group the products by their Subcategory ID and then calculate 
+the average ListPrice for each of those groups.
+*/
+
 -- 52. Show only colors that have more than 20 products (HAVING).
+SELECT Color, 
+       COUNT(*) AS ProductCount
+FROM Production.Product
+GROUP BY Color
+HAVING COUNT(*) > 20;
+/*
+HAVING is like WHERE, but for groups. 
+We use it here to filter the results of our COUNT(*) function.
+Note: Columns used in HAVING must be part of an aggregate function or the GROUP BY clause.
+*/
+
 -- 53. JOIN Person.Person and HumanResources.Employee on BusinessEntityID.
+SELECT pp.FirstName, 
+       he.JobTitle
+FROM Person.Person pp JOIN HumanResources.Employee he
+ON pp.BusinessEntityID = he.BusinessEntityID;
+
 -- 54. JOIN Product and ProductSubcategory to show Product Name and Category Name.
+SELECT * FROM Production.Product;
+SELECT * FROM Production.ProductSubcategory;
+
+SELECT p.Name AS ProductName, 
+       ps.Name AS SubcategoryName
+FROM Production.Product p INNER JOIN Production.ProductSubcategory ps
+    ON p.ProductSubcategoryID = ps.ProductSubcategoryID;
+/*
+We join on ProductSubcategoryID because that is the common link.
+Using Aliases (AS) for the 'Name' columns is essential here 
+because otherwise both columns in the result would just be titled 'Name'.
+*/
+
 -- 55. JOIN Sales.SalesOrderHeader and Sales.SalesTerritory to show Territory Name for each order.
+SELECT * FROM Sales.SalesOrderHeader;
+SELECT * FROM Sales.SalesTerritory;
+
+SELECT soh.SalesOrderID, 
+       soh.OrderDate, 
+       st.Name AS TerritoryName
+FROM Sales.SalesOrderHeader soh INNER JOIN Sales.SalesTerritory st
+    ON soh.TerritoryID = st.TerritoryID;
+
 -- 56. JOIN Employee and EmployeeDepartmentHistory to see who works in which DepartmentID.
+SELECT * FROM HumanResources.Employee;
+SELECT * FROM HumanResources.EmployeeDepartmentHistory;
+
+SELECT e.BusinessEntityID, 
+       e.JobTitle, 
+       edh.DepartmentID, 
+       edh.StartDate
+FROM HumanResources.Employee e INNER JOIN HumanResources.EmployeeDepartmentHistory edh
+    ON e.BusinessEntityID = edh.BusinessEntityID;
+
 -- 57. Use a LEFT JOIN between Product and SalesOrderDetail to find products never sold.
+SELECT p.ProductID, 
+       p.Name AS ProductName, 
+       sod.SalesOrderID
+FROM Production.Product p LEFT JOIN Sales.SalesOrderDetail sod
+    ON p.ProductID = sod.ProductID
+WHERE sod.SalesOrderID IS NULL;
+/*
+1. LEFT JOIN keeps all products, even those with no sales.
+2. If a product was never sold, the SalesOrderID will be NULL.
+3. WHERE sod.SalesOrderID IS NULL filters for exactly those 'unsold' products.
+*/
+
 -- 58. Calculate the total weight of products in each Color category.
+SELECT Color, 
+       SUM(Weight) AS TotalWeight
+FROM Production.Product
+GROUP BY Color;
+/*
+We group products by color and sum their weights.
+Note: Colors with a TotalWeight of NULL mean that none of the products 
+in that category had a weight value entered in the database.
+*/
+
 -- 59. Find the total number of orders placed by each CustomerID.
+SELECT CustomerID, 
+       COUNT(*) AS OrderCount
+FROM Sales.SalesOrderHeader
+GROUP BY CustomerID;
+/*
+We group the sales records by CustomerID.
+COUNT(*) counts how many orders exist for each specific customer.
+To see the biggest customers first, we can add: ORDER BY OrderCount DESC;
+*/
+
 -- 60. JOIN Person.Person, BusinessEntityAddress, and Address to show City for each person.
+SELECT p.FirstName, 
+       p.LastName, 
+       a.City
+FROM Person.Person p INNER JOIN Person.BusinessEntityAddress bea ON p.BusinessEntityID = bea.BusinessEntityID
+                     INNER JOIN Person.Address a ON bea.AddressID = a.AddressID;
+/*
+1. First JOIN connects the person to the bridge table (BusinessEntityAddress).
+2. Second JOIN connects the bridge table to the actual Address table.
+3. This allows us to pull the 'City' column which is only available in the Address table.
+*/
