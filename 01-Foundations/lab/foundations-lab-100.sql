@@ -203,25 +203,167 @@ FROM Purchasing.Vendor;
 -- ============================================================================
 
 -- 41. Find the exact number of minutes between OrderDate and ShipDate.
+SELECT * FROM Sales.SalesOrderHeader;
+SELECT OrderDate,
+	   ShipDate,
+	   DATEDIFF(minute, OrderDate, ShipDate) AS MinutesToShip
+FROM Sales.SalesOrderHeader;
+
 -- 42. Retrieve all sales orders that were placed on a Friday (DATENAME).
+SELECT SalesOrderID, 
+       OrderDate,
+       DATENAME(weekday, OrderDate) AS DayName
+FROM Sales.SalesOrderHeader
+WHERE DATENAME(weekday, OrderDate) = 'Friday';
+
 -- 43. Add exactly 100 days to the current system date (GETDATE).
+SELECT DATEADD(day, 100, GETDATE()) AS DateIn100Days;
+
 -- 44. Extract only the Hour (DATEPART) from the ModifiedDate column in Person.Person.
+SELECT * FROM Person.Person;
+SELECT FirstName, 
+	   LastName, 
+	   DATEPART(hour, ModifiedDate) AS hours
+FROM Person.Person;
+
 -- 45. Find employees who were hired more than 15 years ago.
+SELECT * FROM HumanResources.Employee;
+SELECT BusinessEntityID, 
+       HireDate,
+       DATEDIFF(year, HireDate, GETDATE()) AS YearsEmployed
+FROM HumanResources.Employee
+WHERE DATEDIFF(year, HireDate, GETDATE()) > 15;
+
 -- 46. Format ListPrice as currency using the German culture ('de-DE').
+SELECT ProductID,
+       Name,
+       ListPrice AS OriginalPrice,
+       FORMAT(ListPrice, 'C', 'de-DE') AS GermanPriceFormat -- C = standard numeric format string for valute
+FROM Production.Product
+WHERE ListPrice > 0;
+
 -- 47. Retrieve all sales orders that were placed at exactly 12:00 PM (Noon).
+SELECT SalesOrderID, 
+       OrderDate 
+FROM Sales.SalesOrderHeader
+WHERE CAST(OrderDate AS TIME) = '12:00:00';
+/*
+To find a specific time in a DATETIME column, we can use the CAST function to isolate the TIME portion or use DATEPART to check the specific hour and minute.
+*/
+
 -- 48. Find employees born in leap years (e.g., 1980, 1984, 1988).
+SELECT BusinessEntityID, 
+       BirthDate,
+       YEAR(BirthDate) AS BirthYear
+FROM HumanResources.Employee
+WHERE (YEAR(BirthDate) % 4 = 0 AND YEAR(BirthDate) % 100 <> 0) 
+   OR (YEAR(BirthDate) % 400 = 0);
+/*
+1. YEAR(BirthDate): Extracts the 4-digit year from the date.
+2. MODULO OPERATOR (%): Used to check for divisibility.
+3. LEAP YEAR ALGORITHM: 
+   - A year is a leap year if it is divisible by 4.
+   - However, years divisible by 100 are NOT leap years, unless they are also divisible by 400.
+4. FILTERING: The WHERE clause applies these rules to isolate birth years with 366 days.
+*/
+
 -- 49. Calculate the age of an employee at the time they were hired (HireDate - BirthDate).
+SELECT * FROM HumanResources.Employee;
+SELECT BusinessEntityID, 
+       DATEDIFF(year, BirthDate, HireDate) AS AgeWhenHired
+FROM HumanResources.Employee;
+
 -- 50. Display the last day of the month (EOMONTH) for every SalesOrder.
+SELECT * FROM Sales.SalesOrderHeader;
+SELECT SalesOrderID,
+       OrderDate,
+       EOMONTH(OrderDate) AS EndOfMonth
+FROM Sales.SalesOrderHeader;
+/*
+The EOMONTH function returns the last day of the month that contains a specified date. It is extremely useful for financial reporting and calculating deadlines that fall at the end of a month.
+Syntax: EOMONTH(startDate, [mnthToAdd])
+start_date: The date you are checking (e.g., OrderDate).
+month_to_add (Optional): An integer representing the number of months to add to the start date before finding the last day. If you put 1, it gives you the last day of the next month.
+*/
+
 -- 51. Find orders that were placed during the weekend (Saturday or Sunday).
+SELECT * FROM Sales.SalesOrderHeader;
+SELECT SalesOrderID, 
+       OrderDate,
+       DATENAME(weekday, OrderDate) AS DayPlaced
+FROM Sales.SalesOrderHeader
+WHERE DATENAME(weekday, OrderDate) IN ('Saturday', 'Sunday');
+
 -- 52. Format BirthDate to look like: 'Monday, 15. June 1982'.
+SELECT BusinessEntityID,
+       BirthDate,
+       FORMAT(BirthDate, 'dddd, dd. MMMM yyyy', 'en-US') AS FormattedBirthDate
+FROM HumanResources.Employee;
+
 -- 53. Extract the Week Number (DATEPART) for every order in 2013.
+SELECT SalesOrderID,
+       DATEPART(week, OrderDate) AS weekNumber
+FROM Sales.SalesOrderHeader
+WHERE YEAR(OrderDate) = 2013;
+
 -- 54. Calculate the difference in hours between OrderDate and DueDate.
+SELECT SalesOrderID, 
+       OrderDate,
+       DATEDIFF(hour, OrderDate, DueDate) AS differenceInHours
+FROM Sales.SalesOrderHeader;
+
 -- 55. Find all persons who last updated their data (ModifiedDate) in 2014.
+SELECT BusinessEntityID, FirstName, LastName, ModifiedDate FROM Person.Person
+WHERE YEAR(ModifiedDate) = 2014;
+
 -- 56. Calculate how many days are left until a CreditCard expires from today's date.
+SELECT CreditCardID,
+       ExpMonth,
+       ExpYear,
+       DATEDIFF(day, GETDATE(), EOMONTH(DATEFROMPARTS(ExpYear, ExpMonth, 1))) AS DaysUntilExpiry
+FROM Sales.CreditCard;
+/*
+The DATEFROMPARTS function returns a date value from the specified year, month, and day. It is much safer and cleaner than trying to combine strings with plus signs or slashes.
+Syntax: DATEFROMPARTS(year, month, day)
+year: A 4-digit integer (e.g., 2024).
+month: An integer from 1 to 12.
+day: An integer from 1 to 31 (depending on the month).
+*/
+
 -- 57. Find orders placed in the 2nd Quarter of any year (April, May, June).
+SELECT SalesOrderID, 
+       OrderDate,
+       DATENAME(month, OrderDate) AS MonthName, -- Added for visual confirmation
+       DATEPART(quarter, OrderDate) AS QuarterNumber
+FROM Sales.SalesOrderHeader
+WHERE DATEPART(quarter, OrderDate) = 2;
+-- DATEPART(quarter, DateColumn) returns an integer (1, 2, 3, or 4) based on the month of the date.
+
 -- 58. Display the HireDate and move it to the "Next Monday" (DATEADD logic).
+SELECT BusinessEntityID, 
+       HireDate,
+       DATENAME(weekday, HireDate) AS HireDay,
+       DATEADD(week, DATEDIFF(week, 0, HireDate) + 1, 0) AS NextMonday
+FROM HumanResources.Employee;
+/*
+1. DATEDIFF(day, 0, HireDate) calculates days since 1900-01-01 (a Monday).
+2. Dividing by 7 and adding 1 finds the start of the NEXT week.
+3. DATEADD then reconstructs that specific Monday.
+*/
+
 -- 59. Extract the Birth Year of employees as a numeric value (YEAR).
+SELECT BusinessEntityID, 
+       BirthDate, 
+       YEAR(BirthDate) AS BirthYear
+FROM HumanResources.Employee;
+
 -- 60. Find all sales orders placed in the afternoon (after 12:00 PM).
+SELECT SalesOrderID, 
+       OrderDate, 
+       DATEPART(hour, OrderDate) AS OrderHour
+FROM Sales.SalesOrderHeader
+WHERE DATEPART(hour, OrderDate) >= 12
+ORDER BY OrderHour;
 
 -- ============================================================================
 -- LEVEL 4: ANALYTICS, AGGREGATIONS & HAVING (61 - 80)
