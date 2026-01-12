@@ -76,25 +76,127 @@ SELECT * FROM Person.Person WHERE MiddleName LIKE '_.';
 -- ============================================================================
 
 -- 21. Concatenate FirstName, MiddleName, and LastName (handle NULLs using COALESCE).
+SELECT * FROM Person.Person;
+SELECT FirstName + ' ' + COALESCE(MiddleName + ' ', '') + LastName AS FullName FROM Person.Person;
+-- MiddleName is wrapped in COALESCE because it is the only NULLable column. FirstName and LastName are mandatory (NOT NULL), so they don't need protection.
+-- Adding a space inside COALESCE ensures we don't get double spaces when the MiddleName is missing (NULL).
+/*
+The COALESCE function evaluates a list of arguments in order and returns the first non-null value it encounters. If all arguments in the list are NULL, the function returns NULL.
+Syntax: SELECT COALESCE(expression\_1, expression\_2, ..., expression\_n) AS ... 
+*/
+
 -- 22. Calculate the price margin (ListPrice minus StandardCost) for every product.
+SELECT Name, 
+       ListPrice, 
+       StandardCost,
+       (ListPrice - StandardCost) AS Profit -- Ovdje se odvija oduzimanje
+FROM Production.Product;
+
 -- 23. Display JobTitle and replace the word 'Production' with 'Manufacturing'.
+SELECT JobTitle,
+       REPLACE(JobTitle, 'Production', 'Manufacturing') AS NewJobTitle 
+FROM HumanResources.Employee
+
 -- 24. Extract the first 15 characters of the Comment column in Production.ProductReview.
+SELECT LEFT(Comments, 15) AS fifteen FROM Production.ProductReview;
+
 -- 25. Find the length of the longest PasswordHash in the Person.Password table.
+SELECT PasswordHash,
+       LEN(PasswordHash) AS passLength
+FROM Person.Password;
+
 -- 26. Convert the AccountNumber in Sales.Customer to lowercase.
+SELECT LOWER(AccountNumber) AS lowcaseAccNum
+FROM Sales.Customer;
+
 -- 27. Round the Freight amount to the nearest ten (e.g., 123.45 becomes 120).
+SELECT Freight,
+       ROUND(Freight, -1) AS RoundedFreight
+FROM Sales.SalesOrderHeader;
+
 -- 28. Display the first 6 digits of CardNumber followed by 'XXXX-XXXX'.
+SELECT * FROM Sales.CreditCard;
+SELECT CardNumber,
+       LEFT(CardNumber, 6) + 'XXXX-XXXX' AS MaskedCardNumber
+FROM Sales.CreditCard;
+
 -- 29. Calculate the Square (SQUARE) of the ListPrice for all products.
+SELECT * FROM Production.Product;
+SELECT ProductID,
+       Name,
+       SQUARE(ListPrice) AS aquarePrice
+FROM Production.Product;
+
 -- 30. Display LastName and the lowercase version of LastName side-by-side.
+SELECT * FROM Person.Person;
+SELECT LastName,
+       LOWER(LastName) AS LastNameLowercase
+FROM Person.Person;
+
 -- 31. Find the index position of the '@' symbol in Person.EmailAddress.
+SELECT * FROM Person.EmailAddress;
+SELECT EmailAddress,
+       CHARINDEX('@', EmailAddress) AS AtSymbolPosition
+FROM Person.EmailAddress;
+/*
+The CHARINDEX function searches for a specific substring (or character) inside another string and returns its starting position as an integer.
+CHARINDEX(substring, string, [start\_location])
+substring: The characters you are looking for (e.g., '@').
+string: The column or text you are searching within.
+start_location (Optional): The position where the search starts. If omitted, it starts at the beginning.
+*/
+
 -- 32. Create an "Employee Code": First 2 letters of JobTitle + Last 3 digits of BusinessEntityID.
+SELECT * FROM HumanResources.Employee;
+SELECT CONCAT(LEFT(JobTitle, 2), RIGHT(BusinessEntityID, 3)) AS EmployeeCode 
+FROM HumanResources.Employee;
+
 -- 33. Divide ListPrice by 2 and round the result to 4 decimal places.
+SELECT * FROM Production.Product;
+SELECT ListPrice,
+       ROUND(ListPrice / 2.0, 4) AS DividedAndRoundedPrice -- best to divide with decimal number so we gat a decimal too
+FROM Production.Product;
+
 -- 34. Use REVERSE on the Name column of the Production.Product table.
+SELECT * FROM Production.Product;
+SELECT Name,
+       REVERSE(Name) AS ReversedName
+FROM Production.Product;
+
 -- 35. Display StandardCost plus a fixed "Processing Fee" of $15.00 for all items.
+SELECT StandardCost,
+       (StandardCost + 15.00) AS TotalWithFee
+FROM Production.Product;
+
 -- 36. Find all people whose FirstName contains two consecutive 'a' letters (e.g., 'Isaac').
+SELECT * FROM Person.Person WHERE FirstName LIKE '%aa%';
+
 -- 37. Trim all trailing spaces (RTRIM) from the ProductNumber column.
+SELECT * FROM Production.Product;
+SELECT ProductNumber,
+       RTRIM(ProductNumber) AS CleanedProductNumber 
+FROM Production.Product;
+
 -- 38. Extract the Year from HireDate using SUBSTRING (treat date as string).
+SELECT HireDate,
+       SUBSTRING(CAST(HireDate AS VARCHAR), 1, 4) AS YearFromSubstring        
+FROM HumanResources.Employee;
+/*
+The CAST function is used to convert a value of one data type (like a Number or Date) into another data type (like String/Text). This is necessary when you want to use a function that only accepts a specific type of data.
+Syntax: CAST(expression\ AS\ target\_data\_type)
+expression: The column or value you want to change.
+target_data_type: The new type you want (e.g., VARCHAR for text, INT for whole numbers, DECIMAL for numbers with dots).
+*/
+
 -- 39. Calculate the Absolute (ABS) difference between the Bonus and CommissionPct.
+SELECT ABS(CommissionPct - Bonus) AS AbsoluteDifference FROM Sales.SalesPerson;
+
 -- 40. Create a label: "Vendor: [Name] - Rating: [CreditRating]".
+SELECT * FROM Purchasing.Vendor;
+SELECT Name, 
+       CreditRating, 
+       'Vendor: ' + Name + ' - Rating: ' + CAST(CreditRating AS VARCHAR) AS VendorLabel
+FROM Purchasing.Vendor;
 
 -- ============================================================================
 -- LEVEL 3: ADVANCED DATES & TIME (41 - 60)
