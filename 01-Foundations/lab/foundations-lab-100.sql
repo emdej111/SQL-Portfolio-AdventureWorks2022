@@ -12,25 +12,64 @@ DESCRIPTION:  100 brand new, unique tasks focused on advanced filtering,
 -- ============================================================================
 
 -- 01. Retrieve all records from the Purchasing.Vendor table.
+SELECT * FROM Purchasing.Vendor;
+
 -- 02. Find vendors with a CreditRating greater than 1.
+SELECT * FROM Purchasing.Vendor WHERE CreditRating > 1;
+
 -- 03. Display the Name and GroupName of all departments in HumanResources.Department.
+SELECT Name, GroupName FROM HumanResources.Department;
+
 -- 04. List all addresses in Person.Address where AddressLine2 is NULL.
+SELECT * FROM Person.Address WHERE AddressLine2 IS NULL;
+
 -- 05. Find sales orders in Sales.SalesOrderHeader where the Freight cost exceeds 500.
+SELECT * FROM Sales.SalesOrderHeader WHERE Freight > 500;
+
 -- 06. Retrieve all currencies from Sales.Currency that contain the word 'Dollar' in their name.
+SELECT * FROM Sales.Currency WHERE Name LIKE '%dollar%';
+
 -- 07. Find employees in HumanResources.Employee who have exactly 0 SickLeaveHours.
+SELECT * FROM HumanResources.Employee WHERE SickLeaveHours = 0;
+
 -- 08. Display all unique (DISTINCT) Titles from the Person.Person table.
+SELECT DISTINCT(Title) FROM Person.Person;
+
 -- 09. Find all purchase orders in Purchasing.PurchaseOrderHeader with a Status of 3 (Rejected).
+SELECT * FROM Purchasing.PurchaseOrderHeader WHERE Status = 3;
+
 -- 10. List the top 10 products with the highest Weight in Production.Product.
+SELECT TOP 10 * FROM Production.Product ORDER BY Weight DESC;
+
 -- 11. Find all credit cards in Sales.CreditCard with the CardType 'Vista'.
+SELECT * FROM Sales.CreditCard WHERE CardType = 'Vista';
+
 -- 12. Retrieve tax rates from Sales.SalesTaxRate that are between 5% and 10%.
+SELECT * FROM Sales.SalesTaxRate WHERE TaxRate BETWEEN 5 AND 10;
+
 -- 13. Find products where the ProductNumber contains a hyphen '-'.
+SELECT * FROM Production.Product WHERE ProductNumber LIKE '%-%';
+
 -- 14. Find employees who are 'Single' (MaritalStatus) and 'F' (Gender).
+SELECT * FROM HumanResources.Employee WHERE MaritalStatus = 'S' AND Gender = 'F';
+
 -- 15. Sort all vendors by Name in descending order (Z-A).
+SELECT * FROM Purchasing.Vendor ORDER BY Name DESC;
+
 -- 16. Find all cities in Person.Address that start with the letter 'B'.
+SELECT * FROM Person.Address WHERE City LIKE 'B%';
+
 -- 17. Retrieve all sales orders where the SubTotal is greater than 10,000.
+SELECT * FROM Sales.SalesOrderHeader WHERE SubTotal > 10000;
+
 -- 18. Find locations in Production.Location with a CostRate greater than 0.
+SELECT * FROM Production.Location WHERE CostRate > 0;
+
 -- 19. Display the first 50 rows from the Sales.SpecialOffer table.
+SELECT TOP 50 * FROM Sales.SpecialOffer;
+
 -- 20. Find persons whose MiddleName is recorded as a single initial (e.g., 'J.').
+SELECT * FROM Person.Person WHERE MiddleName LIKE '_.';
 
 -- ============================================================================
 -- LEVEL 2: STRING & NUMERIC MANIPULATION (21 - 40)
