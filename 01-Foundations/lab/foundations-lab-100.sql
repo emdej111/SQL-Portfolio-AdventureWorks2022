@@ -370,26 +370,249 @@ ORDER BY OrderHour;
 -- ============================================================================
 
 -- 61. Find the total Quantity of stock in Production.ProductInventory grouped by LocationID.
--- 62. Count how many unique CardTypes exist for each expiration year.
--- 63. Calculate the average Freight cost per ShipMethodID.
--- 64. Display the Minimum and Maximum SubTotal for each SalesPersonID.
--- 65. Sum the total Weight of products for each Class (H, M, L).
--- 66. Find Departments that have an average VacationHours greater than 50.
--- 67. Count how many products belong to each Style (W, M, U).
--- 68. Calculate the total TaxAmt for each year.
--- 69. Find the CustomerID who has placed the highest number of orders (Top 1).
--- 70. Display only those Cities that have exactly 1 address registered.
--- 71. Sum the Bonus amounts for each JobTitle in HumanResources.Employee.
--- 72. Count how many products are stored on each Shelf in the warehouse.
--- 73. Find the average TaxRate for each StateProvinceID.
--- 74. Sum all DiscountPct values by the Discount Type in Sales.SpecialOffer.
--- 75. List the years in which more than 5,000 orders were placed.
--- 76. Find the lowest ListPrice for each ProductModelID.
--- 77. Count the total number of Male (M) vs Female (F) employees.
--- 78. Calculate the average SickLeaveHours per Department.
--- 79. Find the total sales (TotalDue) for each Quarter of 2013.
--- 80. Display CustomerIDs that have spent a grand total of more than $100,000.
+SELECT LocationID,
+       SUM(Quantity) AS TotalStock
+FROM Production.ProductInventory
+GROUP BY LocationID;
 
+-- 62. Count how many unique CardTypes exist for each expiration year.
+SELECT ExpYear,
+	   COUNT(DISTINCT CardType) AS UniqueCardTypesCount    
+FROM Sales.CreditCard
+GROUP BY ExpYear
+ORDER BY ExpYear;
+/*
+   LOGIC: 
+   1. GROUP BY ExpYear: Groups all credit cards by their expiry year.
+   2. COUNT(DISTINCT CardType): Counts only the different types of cards within that year.
+*/
+
+-- 63. Calculate the average Freight cost per ShipMethodID.
+SELECT ShipMethodID, 
+       AVG(Freight) AS AvgFreight
+FROM Sales.SalesOrderHeader
+GROUP BY ShipMethodID;
+/* 
+   LOGIC: 
+   1. SELECT ShipMethodID: To show which shipping method we are looking at.
+   2. AVG(Freight): To calculate the average cost for that group.
+   3. GROUP BY ShipMethodID: To separate the calculations by each shipping method.
+*/
+
+-- 64. Display the Minimum and Maximum SubTotal for each SalesPersonID.
+SELECT SalesPersonID,
+       MIN(SubTotal) AS MinSub,
+       MAX(SubTotal) AS MaxSub
+FROM Sales.SalesOrderHeader
+WHERE SalesPersonID IS NOT NULL
+GROUP BY SalesPersonID;
+/*
+   LOGIC: 
+   1. GROUP BY SalesPersonID: Creates a bucket for each salesperson.
+   2. MIN(SubTotal): Finds the smallest order amount for that person.
+   3. MAX(SubTotal): Finds the largest order amount for that person.
+
+When using aggregate functions (like MIN, MAX, SUM), any column in the SELECT list that is not inside a function must be included in the GROUP BY clause.
+Why? SQL cannot display a specific SalesOrderID (which changes for every row) alongside a MIN(SubTotal) that is calculated for a whole group of people. It would be like trying to list every student's ID next to the entire class's average grade—it doesn't fit in one row!
+*/
+
+-- 65. Sum the total Weight of products for each Class (H, M, L).
+SELECT Class, 
+       SUM(Weight) AS TotalClassWeight
+FROM Production.Product
+WHERE Weight IS NOT NULL AND Class IS NOT NULL
+GROUP BY Class;
+/* 
+   LOGIC: 
+   1. GROUP BY Class: Segregates products into High, Medium, and Low categories.
+   2. SUM(Weight): Calculates the total combined weight for all products in that class.
+   3. WHERE Class IS NOT NULL: Removes products that don't have a defined class.
+*/
+
+-- 66. Find Departments that have an average VacationHours greater than 50.
+SELECT d.Name AS DepartmentName, 
+       AVG(e.VacationHours) AS AverageVacation
+FROM HumanResources.Employee e
+JOIN HumanResources.EmployeeDepartmentHistory edh 
+    ON e.BusinessEntityID = edh.BusinessEntityID
+JOIN HumanResources.Department d 
+    ON edh.DepartmentID = d.DepartmentID
+WHERE edh.EndDate IS NULL
+GROUP BY d.Name
+HAVING AVG(e.VacationHours) > 50;
+/*
+   LOGIC: 
+   1. JOIN three tables to connect Employees to their Department names.
+   2. GROUP BY Department Name.
+   3. Use HAVING to filter groups where the calculated average is > 50.
+*/
+
+-- 67. Count how many products belong to each Style (W, M, U).
+SELECT Style, 
+       COUNT(*) AS ProductCount
+FROM Production.Product
+WHERE Style IS NOT NULL
+GROUP BY Style;
+/* 
+   LOGIC: 
+   1. SELECT Style: The category we want to see.
+   2. COUNT(*): Counts all products in each category.
+   3. GROUP BY Style: Necessary to collapse individual products into groups.
+*/
+
+-- 68. Calculate the total TaxAmt for each year.
+SELECT YEAR(OrderDate) AS OrderYear, 
+       SUM(TaxAmt) AS TotalTaxCollected
+FROM Sales.SalesOrderHeader
+GROUP BY YEAR(OrderDate)
+ORDER BY OrderYear;
+/* 
+   LOGIC: 
+   1. YEAR(OrderDate): Extracts the year from the full date.
+   2. SUM(TaxAmt): Adds up all tax amounts for each year group.
+   3. GROUP BY YEAR(OrderDate): Collapses all orders into yearly buckets.
+*/
+
+-- 69. Find the CustomerID who has placed the highest number of orders (Top 1).
+SELECT TOP 1 CustomerID, 
+       COUNT(SalesOrderID) AS OrderCount
+FROM Sales.SalesOrderHeader
+GROUP BY CustomerID
+ORDER BY OrderCount DESC;
+/* LOGIC: 
+   1. SELECT TOP 1: Filters the final result to show only the single highest row.
+   2. COUNT(SalesOrderID): Counts how many orders each customer has made.
+   3. GROUP BY CustomerID: Aggregates the orders for each individual customer.
+   4. ORDER BY Count DESC: Places the person with the most orders at the very top.
+*/
+
+-- 70. Display only those Cities that have exactly 1 address registered.
+SELECT City, 
+       COUNT(*) AS AddressCount
+FROM Person.Address
+GROUP BY City
+HAVING COUNT(*) = 1;
+/* LOGIC: 
+   1. GROUP BY City: Groups all addresses by their city name.
+   2. COUNT(*): Counts how many address records exist in each city.
+   3. HAVING COUNT(*) = 1: Filters the groups to show only those where the count is exactly one.
+*/
+
+-- 71. Sum the Bonus amounts for each JobTitle in HumanResources.Employee.
+SELECT e.JobTitle, 
+       SUM(sp.Bonus) AS TotalBonus
+FROM HumanResources.Employee AS e
+JOIN Sales.SalesPerson AS sp ON e.BusinessEntityID = sp.BusinessEntityID
+GROUP BY e.JobTitle;
+/* LOGIC: 
+   1. JOIN Employee & SalesPerson: Links job titles to their respective bonus data.
+   2. SUM(Bonus): Adds up the total bonus money for each category.
+   3. GROUP BY JobTitle: Collapses the results based on the employee's role.
+*/
+
+-- 72. Count how many products are stored on each Shelf in the warehouse.
+SELECT Shelf, 
+       COUNT(*) AS ProductCount
+FROM Production.ProductInventory
+GROUP BY Shelf;
+/* LOGIC: 
+   1. SELECT Shelf, COUNT(*): Selects the shelf identifier and counts items on it.
+   2. FROM Production.ProductInventory: The table where stock locations are stored.
+   3. GROUP BY Shelf: Groups the inventory records by their physical shelf location.
+*/
+
+-- 73. Find the average TaxRate for each StateProvinceID.
+SELECT StateProvinceID, 
+       AVG(TaxRate) AS AvgTax
+FROM Sales.SalesTaxRate
+GROUP BY StateProvinceID;
+/* LOGIC: 
+   1. AVG(TaxRate): Calculates the mathematical average of the tax percentages.
+   2. GROUP BY StateProvinceID: Groups the tax data by state/province code.
+*/
+
+-- 74. Sum all DiscountPct values by the Discount Type in Sales.SpecialOffer.
+SELECT [Type], 
+       SUM(DiscountPct) AS TotalDiscount
+FROM Sales.SpecialOffer
+GROUP BY [Type];
+/* LOGIC: 
+   1. SUM(DiscountPct): Totals all discount percentages for a specific category.
+   2. GROUP BY [Type]: Groups the offers by their classification (e.g., 'No Discount', 'Volume Discount').
+*/
+
+-- 75. List the years in which more than 5,000 orders were placed.
+SELECT YEAR(OrderDate) AS OrderYear, 
+       COUNT(*) AS OrderCount
+FROM Sales.SalesOrderHeader
+GROUP BY YEAR(OrderDate)
+HAVING COUNT(*) > 5000;
+/* LOGIC: 
+   1. YEAR(OrderDate): Extracts the year to create yearly groups.
+   2. COUNT(*): Counts the total number of orders placed in each year.
+   3. HAVING COUNT(*) > 5000: Filters the years to only show those with high order volume.
+*/
+
+-- 76. Find the lowest ListPrice for each ProductModelID.
+SELECT ProductModelID, 
+       MIN(ListPrice) AS MinPrice
+FROM Production.Product
+WHERE ProductModelID IS NOT NULL
+GROUP BY ProductModelID;
+/* LOGIC: 
+   1. MIN(ListPrice): Finds the lowest price within a specific group.
+   2. WHERE ProductModelID IS NOT NULL: Removes products that don't belong to a specific model.
+   3. GROUP BY ProductModelID: Aggregates the prices based on the product model.
+*/
+
+-- 77. Count the total number of Male (M) vs Female (F) employees.
+SELECT Gender, 
+       COUNT(*) AS EmployeeCount
+FROM HumanResources.Employee
+GROUP BY Gender;
+/* LOGIC: 
+   1. SELECT Gender, COUNT(*): Identifies the gender and counts the people in that group.
+   2. GROUP BY Gender: Separates the employee table into 'M' and 'F' buckets.
+*/
+
+-- 78. Calculate the average SickLeaveHours per Department.
+SELECT d.Name, 
+       AVG(e.SickLeaveHours) AS AvgSickHours
+FROM HumanResources.Employee AS e
+JOIN HumanResources.EmployeeDepartmentHistory AS edh ON e.BusinessEntityID = edh.BusinessEntityID
+JOIN HumanResources.Department AS d ON edh.DepartmentID = d.DepartmentID
+WHERE edh.EndDate IS NULL
+GROUP BY d.Name;
+/* LOGIC: 
+   1. JOIN Employee, EmployeeDepartmentHistory, and Department: Connects hours to names.
+   2. AVG(SickLeaveHours): Calculates the average sick leave for the whole department.
+   3. GROUP BY d.Name: Groups the results by the actual name of the department.
+*/
+
+-- 79. Find the total sales (TotalDue) for each Quarter of 2013.
+SELECT DATEPART(quarter, OrderDate) AS Quarter, 
+       SUM(TotalDue) AS TotalSales
+FROM Sales.SalesOrderHeader
+WHERE YEAR(OrderDate) = 2013
+GROUP BY DATEPART(quarter, OrderDate);
+/* LOGIC: 
+   1. WHERE YEAR(OrderDate) = 2013: Limits the data to the specific year.
+   2. DATEPART(quarter, OrderDate): Extracts the quarter (1, 2, 3, or 4).
+   3. SUM(TotalDue): Totals the revenue for each quarter.
+   4. GROUP BY DATEPART(quarter, OrderDate): Groups the results chronologically by quarter.
+*/
+
+-- 80. Display CustomerIDs that have spent a grand total of more than $100,000.
+SELECT CustomerID, 
+       SUM(TotalDue) AS TotalSpent
+FROM Sales.SalesOrderHeader
+GROUP BY CustomerID
+HAVING SUM(TotalDue) > 100000;
+/* LOGIC: 
+   1. SUM(TotalDue): Adds up every dollar a customer has ever spent.
+   2. GROUP BY CustomerID: Aggregates all orders for each unique customer.
+   3. HAVING SUM(TotalDue) > 100000: Filters for "VIP" customers who exceeded the threshold.
+*/
 -- ============================================================================
 -- LEVEL 5: RELATIONAL JOINS & DATA MAPPING (81 - 100)
 -- ============================================================================
