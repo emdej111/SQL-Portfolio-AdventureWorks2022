@@ -20,15 +20,15 @@ JOIN Sales.SalesTerritory t on o.TerritoryID = t.TerritoryID;
 
 ----------------- FINAL BUSINESS REPORT -----------------
 
-SELECT t.[Name] AS TerritoryName,
+SELECT t.[Name] AS TerritoryName, -- [Name] is wrapped in brackets because it is a reserved SQL keyword
        COUNT(o.SalesOrderID) AS TotalOrders,
-       ROUND(SUM(o.TotalDue), 2) AS TotalRevenue,
+       ROUND(SUM(o.TotalDue), 2) AS TotalRevenue, -- nested function - ensures financial precision (SUM first) and clean reporting (ROUND last)
        ROUND(AVG(o.TotalDue), 2) AS AverageOrderValue
-FROM Sales.SalesOrderHeader AS o
-JOIN Sales.SalesTerritory AS t
+FROM Sales.SalesOrderHeader o
+JOIN Sales.SalesTerritory t
     ON o.TerritoryID = t.TerritoryID
 GROUP BY t.[Name]
-ORDER BY TotalRevenue DESC;
+ORDER BY TotalRevenue DESC; -- Sort results so data is organized and ranked
 
 /* LOGIC EXPLANATION:
    1. DATA LINKAGE (JOIN): 
