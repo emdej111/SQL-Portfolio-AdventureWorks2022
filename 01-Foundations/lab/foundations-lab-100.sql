@@ -894,125 +894,236 @@ Focus: JOINS + AGGREGATIONS (SUM, COUNT, AVG) + GROUP BY + HAVING
 -- Display the FirstName and LastName of sales persons and their total sales (TotalDue). 
 -- Only include those whose total sales exceed 2,000,000.
 -- Tables: Person.Person (p), Sales.SalesOrderHeader (soh)
+SELECT * FROM Person.Person;
+SELECT * FROM Sales.SalesOrderHeader;
 
+SELECT * FROM Person.Person p JOIN Sales.SalesOrderHeader soh ON p.BusinessEntityID = soh.SalesPersonID;
 
-
+SELECT p.FirstName, 
+       p.LastName, 
+       SUM(soh.TotalDue) AS TotalSales 
+FROM Person.Person p
+JOIN Sales.SalesOrderHeader soh 
+    ON p.BusinessEntityID = soh.SalesPersonID 
+GROUP BY p.FirstName, 
+         p.LastName 
+HAVING SUM(soh.TotalDue) > 2000000;
 
 -- 102. Most Popular Products by Category
 -- Display the Product Category Name and the total number of items sold (OrderQty).
 -- Tables: Production.ProductCategory, Production.ProductSubcategory, Production.Product, Sales.SalesOrderDetail
+SELECT * FROM Production.ProductCategory;
+SELECT * FROM Production.ProductSubcategory;
+SELECT * FROM Production.Product;
+SELECT * FROM Sales.SalesOrderDetail;
 
-
-
+SELECT pc.Name AS CategoryName, 
+       SUM(sod.OrderQty) AS TotalQuantitySold
+FROM Production.ProductCategory pc
+JOIN Production.ProductSubcategory ps 
+    ON pc.ProductCategoryID = ps.ProductCategoryID
+JOIN Production.Product p 
+    ON ps.ProductSubcategoryID = p.ProductSubcategoryID
+JOIN Sales.SalesOrderDetail sod 
+    ON p.ProductID = sod.ProductID
+GROUP BY pc.Name
+ORDER BY TotalQuantitySold DESC;
 
 -- 103. Average Freight Cost per Country
 -- Calculate the average freight cost (Freight) for each country (CountryRegion).
 -- Tables: Sales.SalesOrderHeader, Sales.SalesTerritory, Person.CountryRegion
-
-
-
+SELECT cr.Name AS Country, 
+       AVG(soh.Freight) AS AvgFreight
+FROM Sales.SalesOrderHeader soh
+JOIN Sales.SalesTerritory st 
+    ON soh.TerritoryID = st.TerritoryID
+JOIN Person.CountryRegion cr 
+    ON st.CountryRegionCode = cr.CountryRegionCode
+GROUP BY cr.Name;
 
 -- 104. High-Value Customers
 -- Find the CustomerID of customers who have placed more than 25 orders.
 -- Table: Sales.SalesOrderHeader
-
-
-
+SELECT CustomerID, 
+       COUNT(SalesOrderID) AS OrderCount
+FROM Sales.SalesOrderHeader
+GROUP BY CustomerID
+HAVING COUNT(SalesOrderID) > 25;
 
 -- 105. Inventory Value by Location
 -- Display the Warehouse Location Name and the total value of stock (Quantity * StandardCost).
 -- Tables: Production.Location, Production.ProductInventory, Production.Product
-
-
+SELECT l.Name AS LocationName, 
+       SUM(pi.Quantity * p.StandardCost) AS TotalStockValue
+FROM Production.Location l
+JOIN Production.ProductInventory pi 
+    ON l.LocationID = pi.LocationID
+JOIN Production.Product p 
+    ON pi.ProductID = p.ProductID
+GROUP BY l.Name;
 
 -- 106. Employee Count by Department
 -- Display each Department Name and the number of employees currently working there (EndDate IS NULL).
 -- Tables: HumanResources.Department, HumanResources.EmployeeDepartmentHistory
-
-
+SELECT d.Name AS Department, 
+       COUNT(edh.BusinessEntityID) AS EmployeeCount
+FROM HumanResources.Department d
+JOIN HumanResources.EmployeeDepartmentHistory edh 
+    ON d.DepartmentID = edh.DepartmentID
+WHERE edh.EndDate IS NULL
+GROUP BY d.Name;
 
 -- 107. Vacation Hours vs. Seniority
 -- Display the JobTitle and the average vacation hours for each position, 
 -- but only where the average is greater than 40 hours.
 -- Table: HumanResources.Employee
-
-
+SELECT JobTitle, 
+       AVG(VacationHours) AS AvgVacation
+FROM HumanResources.Employee
+GROUP BY JobTitle
+HAVING AVG(VacationHours) > 40;
 
 -- 108. Vendor Product Count
 -- Display the Vendor Name and the number of different products they supply to us.
 -- Tables: Purchasing.Vendor, Purchasing.ProductVendor
-
-
+SELECT v.Name AS VendorName, 
+       COUNT(pv.ProductID) AS ProductCount
+FROM Purchasing.Vendor v
+JOIN Purchasing.ProductVendor pv 
+    ON v.BusinessEntityID = pv.BusinessEntityID
+GROUP BY v.Name;
 
 -- 109. Orders by Year and Month
 -- Display the Year and Month of the order and the total number of orders for that period.
 -- Use YEAR(OrderDate) and MONTH(OrderDate) functions.
 -- Table: Sales.SalesOrderHeader
-
-
+SELECT YEAR(OrderDate) AS OrderYear, 
+       MONTH(OrderDate) AS OrderMonth, 
+       COUNT(SalesOrderID) AS TotalOrders
+FROM Sales.SalesOrderHeader
+GROUP BY YEAR(OrderDate), MONTH(OrderDate)
+ORDER BY OrderYear, OrderMonth;
 
 -- 110. Subcategory Price Comparison
 -- Display the Subcategory Name along with its MAX and MIN ListPrice.
 -- Tables: Production.ProductSubcategory, Production.Product
-
-
+SELECT ps.Name AS Subcategory, 
+       MAX(p.ListPrice) AS MaxPrice, 
+       MIN(p.ListPrice) AS MinPrice
+FROM Production.ProductSubcategory ps
+JOIN Production.Product p 
+    ON ps.ProductSubcategoryID = p.ProductSubcategoryID
+GROUP BY ps.Name;
 
 -- 111. Sales Reason Impact
 -- Which Sales Reason is the most common? Display the Reason Name and the count of associated orders.
 -- Tables: Sales.SalesReason, Sales.SalesOrderHeaderSalesReason
-
-
+SELECT sr.Name AS Reason, 
+       COUNT(osr.SalesOrderID) AS OrderCount
+FROM Sales.SalesReason sr
+JOIN Sales.SalesOrderHeaderSalesReason osr 
+    ON sr.SalesReasonID = osr.SalesReasonID
+GROUP BY sr.Name
+ORDER BY OrderCount DESC;
 
 -- 112. Customers with Multiple Credit Cards
 -- Find the names of people who have more than one credit card registered in the system.
 -- Tables: Person.Person, Sales.PersonCreditCard
-
-
+SELECT p.FirstName, 
+       p.LastName, 
+       COUNT(pcc.CreditCardID) AS CardCount
+FROM Person.Person p
+JOIN Sales.PersonCreditCard pcc 
+    ON p.BusinessEntityID = pcc.BusinessEntityID
+GROUP BY p.FirstName, p.LastName, p.BusinessEntityID
+HAVING COUNT(pcc.CreditCardID) > 1;
 
 -- 113. Total Quantity sold per Color
 -- Calculate the total quantity sold grouped by product color. Ignore NULL colors.
 -- Tables: Production.Product, Sales.SalesOrderDetail
-
-
+SELECT p.Color, 
+       SUM(sod.OrderQty) AS TotalQty
+FROM Production.Product p
+JOIN Sales.SalesOrderDetail sod 
+    ON p.ProductID = sod.ProductID
+WHERE p.Color IS NOT NULL
+GROUP BY p.Color;
 
 -- 114. Most Expensive Order per Customer
 -- Display the CustomerID and the amount of the single largest order (TotalDue) they ever made.
 -- Table: Sales.SalesOrderHeader
-
-
+SELECT CustomerID, 
+       MAX(TotalDue) AS MaxOrderAmount
+FROM Sales.SalesOrderHeader
+GROUP BY CustomerID;
 
 -- 115. Shipping Method Popularity
 -- Display the Shipping Method Name (ShipMethod) and the total revenue generated through it.
 -- Tables: Purchasing.ShipMethod, Sales.SalesOrderHeader
-
-
+SELECT sm.Name AS ShipMethod, 
+       SUM(soh.TotalDue) AS TotalRevenue
+FROM Purchasing.ShipMethod sm
+JOIN Sales.SalesOrderHeader soh 
+    ON sm.ShipMethodID = soh.ShipMethodID
+GROUP BY sm.Name;
 
 -- 116. Late Deliveries by Territory
 -- Count how many orders were delivered late (DueDate < ShipDate) for each Territory Name.
 -- Tables: Sales.SalesOrderHeader, Sales.SalesTerritory
-
-
+SELECT st.Name AS Territory, 
+       COUNT(soh.SalesOrderID) AS LateOrderCount
+FROM Sales.SalesOrderHeader soh
+JOIN Sales.SalesTerritory st 
+    ON soh.TerritoryID = st.TerritoryID
+WHERE soh.ShipDate > soh.DueDate
+GROUP BY st.Name;
 
 -- 117. Revenue per Product Model
 -- Display the Product Model Name and the total revenue (LineTotal) generated by that model.
 -- Tables: Production.ProductModel, Production.Product, Sales.SalesOrderDetail
-
-
+SELECT pm.Name AS ModelName, 
+       SUM(sod.LineTotal) AS TotalRevenue
+FROM Production.ProductModel pm
+JOIN Production.Product p 
+    ON pm.ProductModelID = p.ProductModelID
+JOIN Sales.SalesOrderDetail sod 
+    ON p.ProductID = sod.ProductID
+GROUP BY pm.Name;
 
 -- 118. Monthly Revenue in 2011
 -- Display the total revenue (TotalDue) for each month specifically for the year 2011.
 -- Table: Sales.SalesOrderHeader
-
-
+SELECT MONTH(OrderDate) AS Month, 
+       SUM(TotalDue) AS MonthlyRevenue
+FROM Sales.SalesOrderHeader
+WHERE YEAR(OrderDate) = 2011
+GROUP BY MONTH(OrderDate)
+ORDER BY Month;
 
 -- 119. Top 3 Selling Subcategories
 -- Find the Top 3 subcategories with the highest total quantity of items sold.
 -- Use SELECT TOP 3... ORDER BY ... DESC
-
-
+SELECT TOP 3 ps.Name AS Subcategory, 
+       SUM(sod.OrderQty) AS TotalQtySold
+FROM Production.ProductSubcategory ps
+JOIN Production.Product p 
+    ON ps.ProductSubcategoryID = p.ProductSubcategoryID
+JOIN Sales.SalesOrderDetail sod 
+    ON p.ProductID = sod.ProductID
+GROUP BY ps.Name
+ORDER BY TotalQtySold DESC;
 
 -- 120. FINAL BOSS: Comprehensive Sales Summary
 -- Display the Year, the Country Name, and the Total Sales. 
 -- Sort the results by Year (ASC) and then by Total Sales (DESC).
 -- Tables: Sales.SalesOrderHeader, Sales.SalesTerritory, Person.CountryRegion
-
+SELECT YEAR(soh.OrderDate) AS OrderYear, 
+       cr.Name AS Country, 
+       SUM(soh.TotalDue) AS AnnualSales
+FROM Sales.SalesOrderHeader soh
+JOIN Sales.SalesTerritory st 
+    ON soh.TerritoryID = st.TerritoryID
+JOIN Person.CountryRegion cr 
+    ON st.CountryRegionCode = cr.CountryRegionCode
+GROUP BY YEAR(soh.OrderDate), cr.Name
+ORDER BY OrderYear ASC, AnnualSales DESC;
