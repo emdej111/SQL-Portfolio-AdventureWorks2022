@@ -13,6 +13,37 @@ DESCRIPTION:  Auditing stock levels for specific product categories (Bikes).
 */
 
 -- Step 1: Explore Production.Product table
+SELECT * FROM Production.Product;
 
 ----------------- FINAL BUSINESS REPORT -----------------
 -- Hint: WHERE Name LIKE '%Mountain%' OR Name LIKE '%Road%'...
+SELECT ProductID, 
+	   Name, 
+	   SafetyStockLevel
+FROM Production.Product
+WHERE SafetyStockLevel BETWEEN 500 AND 1000 
+AND (Name LIKE '%Mountain%' OR Name LIKE '%Road%') --Without parentheses, SQL prioritizes the AND operator, which would incorrectly apply the stock filter ONLY to Mountain bikes. I used parentheses to wrap the 'OR' conditions. This forces SQL to treat both bike types as a single group before checking the SafetyStockLevel constraint.
+ORDER BY SafetyStockLevel ASC;
+
+/* LOGIC EXPLANATION:
+   1. DATA SOURCE: 
+      Targeted the 'Production.Product' table to audit inventory safety settings 
+      for high-value bike assets.
+      
+   2. BETWEEN: 
+      Applied a strict inventory constraint (500-1000 units) to isolate products 
+      that require specific stock monitoring.
+      
+   3. LOGICAL GROUPING (The Parentheses): 
+      Crucial step! I used parentheses around the OR conditions (Mountain OR Road). 
+      This overrides SQL's default behavior where AND is processed before OR, 
+      ensuring the stock filter applies to both categories equally.
+      
+   4. PATTERN MATCHING: 
+      Used LIKE with wildcards (%) to capture all model variations within the 
+      Mountain and Road bike families.
+      
+   5. SORTING: 
+      Ordered by 'SafetyStockLevel' in ascending order to provide a clear ranking 
+      starting from the lowest threshold of the audit range.
+*/
