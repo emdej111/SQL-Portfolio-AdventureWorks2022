@@ -618,22 +618,267 @@ HAVING SUM(TotalDue) > 100000;
 -- ============================================================================
 
 -- 81. Join Product and ProductModel to show the Product Name and Model Name.
+SELECT * FROM Production.Product;
+SELECT * FROM Production.ProductModel;
+
+SELECT pp.Name AS ProductName,
+	   pm.Name AS ModelName
+FROM Production.Product pp
+JOIN Production.ProductModel pm 
+ON pp.ProductModelID = pm.ProductModelID;
+
 -- 82. Join Person and EmailAddress to list FirstName, LastName, and Email.
+SELECT * FROM Person.Person;
+SELECT * FROM Person.EmailAddress;
+
+SELECT pp.FirstName,
+	   pp.LastName,
+	   pea.EmailAddress
+FROM Person.Person pp JOIN Person.EmailAddress pea
+ON pp.BusinessEntityID = pea.BusinessEntityID;
+
 -- 83. Join Customer and Store to see the CustomerID and the Store Name.
+SELECT * FROM Sales.Customer;
+SELECT * FROM Sales.Store;
+
+SELECT c.CustomerID, 
+	   s.Name
+FROM Sales.Customer c JOIN Sales.Store s 
+ON c.StoreID = s.BusinessEntityID;
+
 -- 84. Use a LEFT JOIN between Employee and JobCandidate.
+SELECT * FROM HumanResources.Employee;
+SELECT * FROM HumanResources.JobCandidate;
+
+SELECT * FROM HumanResources.Employee e LEFT JOIN HumanResources.JobCandidate jc
+ON e.BusinessEntityID = jc.BusinessEntityID;
+
 -- 85. Join SalesOrderHeader and CurrencyRate to see the Order and EndOfDayRate.
+SELECT * FROM Sales.SalesOrderHeader;
+SELECT * FROM Sales.CurrencyRate;
+
+SELECT soh.SalesOrderID,
+	   cr.EndOfDayRate
+FROM Sales.SalesOrderHeader soh JOIN Sales.CurrencyRate cr 
+ON soh.CurrencyRateID = cr.CurrencyRateID;
+
 -- 86. Join Product and Document via the ProductDocument table.
+SELECT * FROM Production.Product;
+SELECT * FROM Production.Document;
+SELECT * FROM Production.ProductDocument;
+
+SELECT * FROM Production.Product p 
+JOIN Production.ProductDocument pd 
+    ON p.ProductID = pd.ProductID
+JOIN Production.Document d 
+    ON pd.DocumentNode = d.DocumentNode;
+
 -- 87. Join Person.Person and Person.Password to see names and PasswordHashes.
+SELECT * FROM Person.Person;
+SELECT * FROM Person.Password;
+
+SELECT p.FirstName,
+	   p.LastName,
+	   pw.PasswordHash
+FROM Person.Person p 
+JOIN Person.Password pw
+	ON p.BusinessEntityID = pw.BusinessEntityID;
+
 -- 88. Display the Customer's FirstName and their Credit Card Type.
+SELECT * FROM Person.Person;
+SELECT * FROM Sales.Customer;
+SELECT * FROM Sales.PersonCreditCard;
+SELECT * FROM Sales.CreditCard;
+
+SELECT p.FirstName, 
+	   cc.CardType
+FROM Person.Person p
+JOIN Sales.PersonCreditCard pcc 
+    ON p.BusinessEntityID = pcc.BusinessEntityID
+JOIN Sales.CreditCard cc 
+    ON pcc.CreditCardID = cc.CreditCardID;
+
 -- 89. SELF JOIN: Match Employees to their Managers (ManagerID = BusinessEntityID).
+SELECT * FROM HumanResources.Employee
+
+SELECT e.BusinessEntityID AS EmployeeID,
+       e.JobTitle AS EmployeeJob,
+       m.BusinessEntityID AS ManagerID,
+       m.JobTitle AS ManagerJob
+FROM HumanResources.Employee e
+JOIN HumanResources.Employee m 
+    ON e.OrganizationNode.GetAncestor(1) = m.OrganizationNode;
+/*
+   Logic: 
+   1. FROM HumanResources.Employee AS e (This represents the SUBORDINATE)
+   2. JOIN HumanResources.Employee AS m (This represents the MANAGER)
+   3. ON e.ManagerID = m.BusinessEntityID (Link the worker's manager ID to the manager's personal ID)
+
+GetAncestor(n) Function
+   1. DATA TYPE: Works specifically with the 'HierarchyID' data type.
+   2. PURPOSE: It is used to navigate tree-like structures (e.g., Company Org Charts).
+   3. LOGIC:
+      - It returns a hierarchy node that is 'n' levels above the current node.
+      - GetAncestor(1) = The immediate parent/manager.
+      - GetAncestor(2) = The grandparent/director.
+   4. USAGE IN SELF JOIN: 
+      By setting 'Employee.GetAncestor(1) = Manager.Node', we are essentially saying:
+      "Find the person whose position is exactly one level above this employee."
+*/
+
 -- 90. Join Product and Vendor via the Purchasing.ProductVendor table.
+SELECT * FROM Production.Product;
+SELECT * FROM Purchasing.Vendor;
+SELECT * FROM Purchasing.ProductVendor;
+
+SELECT p.Name AS ProductName, 
+       v.Name AS VendorName,
+       pv.StandardPrice,
+       pv.OnOrderQty
+FROM Production.Product p
+JOIN Purchasing.ProductVendor AS pv 
+    ON p.ProductID = pv.ProductID
+JOIN Purchasing.Vendor v 
+    ON pv.BusinessEntityID = v.BusinessEntityID;
+
 -- 91. LEFT JOIN: Find Products that have no records in Production.ProductInventory.
+SELECT * FROM Production.Product;
+SELECT * FROM Production.ProductInventory;
+
+SELECT p.ProductID, 
+       p.Name AS ProductName
+FROM Production.Product p
+LEFT JOIN Production.ProductInventory pi 
+    ON p.ProductID = pi.ProductID
+WHERE pi.ProductID IS NULL;
+
 -- 92. Join ShipMethod and SalesOrderHeader to show Order IDs and Shipping Names.
+SELECT * FROM Purchasing.ShipMethod;
+SELECT * FROM Sales.SalesOrderHeader;
+
+SELECT soh.SalesOrderID, 
+       sm.Name AS ShippingMethodName
+FROM Sales.SalesOrderHeader soh
+JOIN Purchasing.ShipMethod sm 
+    ON soh.ShipMethodID = sm.ShipMethodID;
+
 -- 93. Join StateProvince and CountryRegion to show the Full Country and Province names.
+SELECT * FROM Person.StateProvince;
+SELECT * FROM Person.CountryRegion;
+
+SELECT sp.Name AS StateProvinceName, 
+       cr.Name AS CountryName
+FROM Person.StateProvince AS sp
+JOIN Person.CountryRegion AS cr 
+    ON sp.CountryRegionCode = cr.CountryRegionCode;
+
 -- 94. Join Product and ProductCostHistory to show price changes over time.
+SELECT * FROM Production.Product;
+SELECT * FROM Production.ProductCostHistory;
+
+SELECT p.Name AS ProductName, 
+       pch.StartDate, 
+       pch.EndDate, 
+       pch.StandardCost
+FROM Production.Product p
+JOIN Production.ProductCostHistory pch 
+    ON p.ProductID = pch.ProductID
+ORDER BY p.Name, pch.StartDate;
+/* LOGIC:
+   1. SELECT p.Name: To know which product we are looking at.
+   2. SELECT pch.StandardCost and pch.StartDate: To see the cost and when it began.
+   3. JOIN on ProductID: Links the product to its historical cost records.
+*/
+
 -- 95. Join Department and EmployeeDepartmentHistory to show all names in the 'IT' department.
+SELECT * FROM HumanResources.Department;
+SELECT * FROM HumanResources.EmployeeDepartmentHistory;
+
+SELECT edh.BusinessEntityID, 
+       d.Name AS DepartmentName, 
+       edh.StartDate
+FROM HumanResources.Department d
+JOIN HumanResources.EmployeeDepartmentHistory edh 
+    ON d.DepartmentID = edh.DepartmentID
+WHERE d.Name = 'Information Services' 
+  AND edh.EndDate IS NULL;
+/* LOGIC:
+   1. JOIN Department (d) and EmployeeDepartmentHistory (edh) on DepartmentID.
+   2. FILTER by Department Name = 'Information Services'.
+   3. FILTER for Current Employees where EndDate IS NULL.
+*/
+
 -- 96. Join SalesTaxRate and StateProvince to show the Tax Rate for each State name.
+SELECT * FROM Sales.SalesTaxRate;
+SELECT * FROM Person.StateProvince;
+
+SELECT sp.Name AS StateName, 
+       str.TaxRate, 
+       str.Name AS TaxDescription
+FROM Sales.SalesTaxRate str
+JOIN Person.StateProvince sp 
+    ON str.StateProvinceID = sp.StateProvinceID;
+
 -- 97. Join Product and ProductPhoto via the ProductProductPhoto table.
+SELECT * FROM Production.Product;
+SELECT * FROM Production.ProductPhoto;
+SELECT * FROM Production.ProductProductPhoto;
+
+SELECT p.Name AS ProductName, 
+       pp.LargePhotoFileName, 
+       ppp.[Primary] AS IsPrimaryPhoto
+FROM Production.Product AS p
+JOIN Production.ProductProductPhoto AS ppp 
+    ON p.ProductID = ppp.ProductID
+JOIN Production.ProductPhoto AS pp 
+    ON ppp.ProductPhotoID = pp.ProductPhotoID;
+
+/* LOGIC:
+   - Goal: Connect Products to their images.
+   - The Problem: A Product can have many photos, and a Photo could potentially 
+     be used for many products. They cannot be linked directly.
+   - The Solution: We use a "Bridge" (Junction) table called 'ProductProductPhoto'.
+   - The Chain:
+     1. Product (p) links to Bridge (ppp) via [ProductID].
+     2. Bridge (ppp) links to ProductPhoto (pp) via [ProductPhotoID].
+   - Key Detail: We use [Primary] in brackets because 'Primary' is a reserved 
+     SQL keyword.
+*/
+
 -- 98. Join Store and SalesPerson to see which salesperson is assigned to which store.
+SELECT * FROM Sales.Store;
+SELECT * FROM Sales.SalesPerson;
+
+SELECT s.Name AS StoreName, 
+       sp.BusinessEntityID AS SalesPersonID,
+       sp.SalesYTD AS SalesPersonPerformance
+FROM Sales.Store s
+JOIN Sales.SalesPerson sp 
+    ON s.SalesPersonID = sp.BusinessEntityID;
+
 -- 99. Join BillOfMaterials and Product to see the component parts of an assembly.
+SELECT * FROM Production.BillOfMaterials;
+SELECT * FROM Production.Product;
+
+SELECT bom.ProductAssemblyID,  -- The ID of the "Finished Bike"
+       p.Name AS ComponentName, -- The Name of the "Part"
+       bom.PerAssemblyQty,      -- How many of these parts are needed
+       bom.UnitMeasureCode
+FROM Production.BillOfMaterials bom
+JOIN Production.Product p 
+    ON bom.ComponentID = p.ProductID;
+
 -- 100. Join Person, EmailAddress, and PersonPhone for a complete contact overview.
+SELECT * FROM Person.Person;
+SELECT * FROM Person.EmailAddress;
+SELECT * FROM Person.PersonPhone;
+
+SELECT p.FirstName, 
+       p.LastName, 
+       ea.EmailAddress, 
+       ph.PhoneNumber
+FROM Person.Person p
+JOIN Person.EmailAddress ea 
+    ON p.BusinessEntityID = ea.BusinessEntityID
+JOIN Person.PersonPhone ph 
+    ON p.BusinessEntityID = ph.BusinessEntityID;
