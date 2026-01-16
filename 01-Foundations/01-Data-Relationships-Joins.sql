@@ -29,3 +29,26 @@ JOIN Sales.SalesTerritory AS t
     ON o.TerritoryID = t.TerritoryID
 GROUP BY t.[Name]
 ORDER BY TotalRevenue DESC;
+
+/* LOGIC EXPLANATION:
+   1. DATA LINKAGE (JOIN): 
+      I linked the 'SalesOrderHeader' (transactions) with 'SalesTerritory' (geography) 
+      using the 'TerritoryID' as the common key.
+      
+   2. AGGREGATION (MATHEMATICS):
+      - COUNT: Calculated the volume of business by counting unique Order IDs.
+      - SUM: Calculated the total gross revenue per region.
+      - AVG: Calculated the mean value of a single transaction (Average Ticket).
+      
+   3. DATA REFINEMENT (ROUNDING):
+      Used the ROUND function to limit currency values to 2 decimal places 
+      for a clean, professional financial report.
+      
+   4. GROUP BY:
+      Collapsed thousands of individual sales into summary rows based on the 
+      Territory Name. Every non-aggregated column in SELECT must be here.
+      
+   5. ORDER BY:
+      Ranked the territories from highest to lowest revenue to immediately 
+      highlight the top-performing regions.
+*/
