@@ -3,7 +3,7 @@
 FILE NAME:    07-Master-Logistics-Audit.sql
 PROJECT:      AdventureWorks Foundations Capstone
 AUTHOR:       emdej111 - Monika Jurak
-DATE:         17-01-2026
+DATE:         20-01-2026
 DESCRIPTION:  Final Graduation Challenge - Linking shipping costs to delivery 
               delays to identify financial losses.
 ===============================================================================
@@ -23,4 +23,30 @@ We need a report that shows:
 - FILTER: Use HAVING to show only methods with at least 1 'CRITICAL DELAY'.
 - SORTING: Rank by Total Freight Cost (highest first).
 -------------------------------------------------------------------------------
+*/
+
+SELECT * FROM Sales.SalesOrderHeader; -- (soh)
+SELECT * FROM Purchasing.ShipMethod; -- (sm)
+
+SELECT * FROM Sales.SalesOrderHeader soh JOIN Purchasing.ShipMethod sm ON soh.ShipMethodID = sm.ShipMethodID
+
+SELECT sm.[Name] AS ShippingMethodName,
+       ROUND(SUM(soh.Freight), 2) AS TotalFreightCost,
+       COUNT(CASE WHEN DATEDIFF(DAY, DueDate, ShipDate) > 5 THEN 1 END) AS CriticalDelayCount
+FROM Sales.SalesOrderHeader soh 
+JOIN Purchasing.ShipMethod sm ON soh.ShipMethodID = sm.ShipMethodID
+GROUP BY sm.[Name]
+HAVING COUNT(CASE WHEN DATEDIFF(DAY, DueDate, ShipDate) > 5 THEN 1 END) > 0
+ORDER BY TotalFreightCost DESC;
+
+/* LOGIC EXPLANATION:
+   1. JOIN: Successfully linked Sales and Purchasing tables using ShipMethodID 
+      to associate delivery methods with their respective costs and dates.
+   2. AGGREGATION: Grouped results by Shipping Method Name to provide a summarized 
+      view of freight expenses.
+   3. CONDITIONAL METRICS: Implemented a CASE statement within a COUNT function to 
+      isolate specific operational failures (delays > 5 days) without 
+      filtering out the financial totals.
+   4. DATA FILTERING: Used HAVING to exclude high-performing shipping methods, 
+      focusing the report exclusively on problematic areas.
 */
