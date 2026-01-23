@@ -383,23 +383,114 @@ AND CustomerID NOT IN (SELECT CustomerID FROM Sales.SalesOrderHeader WHERE YEAR(
 -- LEVEL 6: SET OPERATORS & EXISTENCE CHECKS (20 TASKS)
 -- ============================================================================
 
+-- 20. Find customers who placed an order in 2011 but NOT in 2012.
+SELECT DISTINCT CustomerID FROM Sales.SalesOrderHeader
+WHERE YEAR(OrderDate) = 2011
+AND CustomerID NOT IN (SELECT CustomerID FROM Sales.SalesOrderHeader WHERE YEAR(OrderDate) = 2012);
+
 -- 21. Use UNION to combine a list of all Product Names and all Category Names into one column.
+SELECT Name FROM Production.Product
+UNION
+SELECT Name FROM Production.ProductCategory;
+
 -- 22. Use UNION ALL to combine the same list and notice the difference in record count.
+SELECT Name FROM Production.Product
+UNION ALL
+SELECT Name FROM Production.ProductCategory;
+
 -- 23. Use INTERSECT to find BusinessEntityIDs that appear in both the Employee and SalesPerson tables.
+SELECT BusinessEntityID FROM HumanResources.Employee
+INTERSECT
+SELECT BusinessEntityID FROM Sales.SalesPerson;
+
 -- 24. Use EXCEPT to find BusinessEntityIDs that are Employees but NOT SalesPersons.
+SELECT BusinessEntityID FROM HumanResources.Employee
+EXCEPT
+SELECT BusinessEntityID FROM Sales.SalesPerson;
+
 -- 25. Use EXISTS to find all products that have a recorded inventory level in Production.ProductInventory.
+SELECT ProductID, Name 
+FROM Production.Product AS p
+WHERE EXISTS (SELECT 1 FROM Production.ProductInventory AS i WHERE i.ProductID = p.ProductID);
+
 -- 26. Use NOT EXISTS to find products that have NO inventory records.
+SELECT p.ProductID, p.Name 
+FROM Production.Product AS p
+WHERE NOT EXISTS (SELECT 1 FROM Production.ProductInventory AS i WHERE i.ProductID = p.ProductID);
+
 -- 27. Combine a list of FirstNames from Person and JobTitles from Employee into one result set (UNION).
+SELECT FirstName AS CombinedData FROM Person.Person
+UNION
+SELECT JobTitle FROM HumanResources.Employee;
+
 -- 28. Find cities where both a Customer and a Vendor are located (INTERSECT on Address/City).
--- 29. List all products that are NOT 'Red' and also NOT 'Black' using EXCEPT with two SELECTs.
+SELECT City FROM Person.Address WHERE AddressID IN (SELECT AddressID FROM Person.BusinessEntityAddress WHERE BusinessEntityID IN (SELECT BusinessEntityID FROM Sales.Customer))
+INTERSECT
+SELECT City FROM Person.Address WHERE AddressID IN (SELECT AddressID FROM Person.BusinessEntityAddress WHERE BusinessEntityID IN (SELECT BusinessEntityID FROM Purchasing.Vendor));
+
+-- 29. List all products that are NOT 'Red' and also NOT 'Black' (Using EXCEPT).
+SELECT Name FROM Production.Product
+EXCEPT
+SELECT Name FROM Production.Product WHERE Color IN ('Red', 'Black');
+
 -- 30. Use EXISTS to find customers who have placed at least one order with a TotalDue > 10000.
+SELECT CustomerID FROM Sales.Customer AS C
+WHERE EXISTS (SELECT 1 FROM Sales.SalesOrderHeader AS SOH WHERE SOH.CustomerID = C.CustomerID AND SOH.TotalDue > 10000);
+
 -- 31. Create a union of all 'Silver' products and all 'Black' products.
+SELECT Name, Color FROM Production.Product WHERE Color = 'Silver'
+UNION
+SELECT Name, Color FROM Production.Product WHERE Color = 'Black';
+
 -- 32. Find names of employees who have NEVER changed their department (Use NOT EXISTS on History table).
+SELECT p.FirstName, p.LastName FROM Person.Person AS p
+WHERE EXISTS (SELECT 1 FROM HumanResources.Employee AS e WHERE e.BusinessEntityID = p.BusinessEntityID)
+AND NOT EXISTS (SELECT 1 FROM HumanResources.EmployeeDepartmentHistory AS edh 
+                WHERE edh.BusinessEntityID = p.BusinessEntityID 
+                GROUP BY edh.BusinessEntityID HAVING COUNT(*) > 1);
+
 -- 33. Find territories that have sales in 2013 but had NO sales in 2011 (EXCEPT).
--- 34. Use UNION to list all distinct cities from both the Person.Address and Sales.SalesTerritory tables.
+SELECT TerritoryID FROM Sales.SalesOrderHeader WHERE YEAR(OrderDate) = 2013
+EXCEPT
+SELECT TerritoryID FROM Sales.SalesOrderHeader WHERE YEAR(OrderDate) = 2011;
+
+-- 34. Use UNION to list all distinct cities/names from Person.Address and Sales.SalesTerritory tables.
+SELECT City FROM Person.Address
+UNION
+SELECT Name FROM Sales.SalesTerritory;
+
 -- 35. Find products sold in territory 1 but not in territory 10 (EXCEPT).
+SELECT ProductID FROM Sales.SalesOrderDetail AS SOD 
+JOIN Sales.SalesOrderHeader AS SOH ON SOD.SalesOrderID = SOH.SalesOrderID WHERE SOH.TerritoryID = 1
+EXCEPT
+SELECT ProductID FROM Sales.SalesOrderDetail AS SOD 
+JOIN Sales.SalesOrderHeader AS SOH ON SOD.SalesOrderID = SOH.SalesOrderID WHERE SOH.TerritoryID = 10;
+
 -- 36. Use EXISTS to find products that were sold in the month of December.
--- 37. List all managers (BusinessEntityID) who have at least one direct report (EXISTS on Employee.ManagerID).
--- 38. Use INTERSECT to find colors that exist in both the Product and ProductModel tables.
+SELECT p.ProductID, p.Name FROM Production.Product AS p
+WHERE EXISTS (SELECT 1 FROM Sales.SalesOrderDetail AS sod 
+              JOIN Sales.SalesOrderHeader AS soh ON sod.SalesOrderID = soh.SalesOrderID 
+              WHERE sod.ProductID = p.ProductID AND MONTH(soh.OrderDate) = 12);
+
+-- 37. List all managers (BusinessEntityID) who have at least one direct report (EXISTS on Employee table).
+-- Note: In AdventureWorks, hierarchy is tracked via OrganizationNode.
+SELECT BusinessEntityID, JobTitle FROM HumanResources.Employee AS e
+WHERE EXISTS (SELECT 1 FROM HumanResources.Employee AS sub 
+              WHERE sub.OrganizationNode.GetAncestor(1) = e.OrganizationNode);
+
+-- 38. Use INTERSECT to find colors that exist in both 'Finished Goods' and 'Components'.
+SELECT Color FROM Production.Product WHERE FinishedGoodsFlag = 1 AND Color IS NOT NULL
+INTERSECT
+SELECT Color FROM Production.Product WHERE FinishedGoodsFlag = 0 AND Color IS NOT NULL;
+
 -- 39. Use UNION to create a master list of all unique IDs (BusinessEntityID) from Person, Employee, and Vendor.
--- 40. Find orders where all items in the order have a unit price > 100 (Use NOT EXISTS to find orders where NO item is < 100).
+SELECT BusinessEntityID FROM Person.Person
+UNION
+SELECT BusinessEntityID FROM HumanResources.Employee
+UNION
+SELECT BusinessEntityID FROM Purchasing.Vendor;
+
+-- 40. Find orders where all items in the order have a unit price > 100 (Use NOT EXISTS to find orders where NO item is <= 100).
+SELECT SalesOrderID FROM Sales.SalesOrderHeader AS SOH
+WHERE NOT EXISTS (SELECT 1 FROM Sales.SalesOrderDetail AS SOD 
+                  WHERE SOD.SalesOrderID = SOH.SalesOrderID AND SOD.UnitPrice <= 100);
