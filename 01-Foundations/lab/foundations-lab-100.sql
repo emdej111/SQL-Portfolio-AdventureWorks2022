@@ -89,7 +89,7 @@ Syntax: SELECT COALESCE(expression\_1, expression\_2, ..., expression\_n) AS ...
 SELECT Name, 
        ListPrice, 
        StandardCost,
-       (ListPrice - StandardCost) AS Profit -- Ovdje se odvija oduzimanje
+       (ListPrice - StandardCost) AS Profit 
 FROM Production.Product;
 
 -- 23. Display JobTitle and replace the word 'Production' with 'Manufacturing'.
