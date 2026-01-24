@@ -14,3 +14,4 @@ This directory contains core SQL queries focusing on fundamental data retrieval 
 4. **04-Customer-Order-Segmentation.sql** – Categorizing orders by value using `CASE` logic.
 5. **05-Sales-Data-Integrity-Check.sql** – Auditing missing data (NULLs) in sales representative assignments.
 6. **06-Shipping-Efficiency-Report.sql** – Logistics analysis of shipping delays and scheduled vs. actual dates.
+7. **07-master-challenge.sql
