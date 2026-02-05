@@ -129,8 +129,8 @@ FROM HumanResources.Employee
 SELECT LEFT(Comments, 15) AS fifteen FROM Production.ProductReview;
 
 -- 25. Find the length of the longest PasswordHash in the Person.Password table.
-SELECT PasswordHash,
-       MAX(LEN(PasswordHash)) AS passLength
+SELECT PasswordHash, 
+	   MAX(LEN(PasswordHash)) AS passLength 
 FROM Person.Password;
 /* The LEN function returns the number of characters in a string, excluding trailing spaces. It is vital for data validation, such as 
    checking if passwords or identifiers meet specific length requirements.
@@ -283,7 +283,7 @@ SELECT DATEADD(day, 100, GETDATE()) AS DateIn100Days;
 SELECT * FROM Person.Person;
 SELECT FirstName, 
 	   LastName, 
-	   DATEPART(hour, ModifiedDate) AS hours
+	   DATEPART(hour, ModifiedDate) AS hours 
 FROM Person.Person;
 -- The DATEPART(interval, date) function returns an integer representing the specified part of the date
 
@@ -299,7 +299,7 @@ WHERE DATEDIFF(year, HireDate, GETDATE()) > 15;
 SELECT ProductID,
        Name,
        ListPrice AS OriginalPrice,
-       FORMAT(ListPrice, 'C', 'de-DE') AS GermanPriceFormat -- C = standard numeric format string for valute
+       FORMAT(ListPrice, 'C', 'de-DE') AS GermanPriceFormat -- C = standard numeric format string for currency
 FROM Production.Product
 WHERE ListPrice > 0;
 /* The FORMAT function is used to convert numeric or date values into strings formatted according to specific cultures
@@ -766,7 +766,7 @@ JOIN HumanResources.Employee m
 /* LOGIC: 
      1. FROM HumanResources.Employee AS e (This represents the SUBORDINATE)
      2. JOIN HumanResources.Employee AS m (This represents the MANAGER)
-     3. ON e.ManagerID = m.BusinessEntityID (Link the worker's manager ID to the manager's personal ID)
+     3. ON e.OrganizationNode.GetAncestor(1) = m.OrganizationNode (Finds the person whose position is exactly one level above this employee using HierarchyID)
 
    GetAncestor(n) Function
      * DATA TYPE: Works specifically with the 'HierarchyID' data type
@@ -956,6 +956,7 @@ JOIN Sales.SalesOrderHeader soh
 GROUP BY p.FirstName, 
          p.LastName 
 HAVING SUM(soh.TotalDue) > 2000000;
+
 /* 1. GROUP BY vs. WHERE (The Timing Rule):
         * WHERE filters individual rows BEFORE they are summed up. It doesn't know the TotalSales yet
         * HAVING filters the "Buckets" AFTER SQL has calculated the SUM()
