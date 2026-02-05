@@ -22,6 +22,7 @@ SELECT Name, GroupName FROM HumanResources.Department;
 
 -- 04. List all addresses in Person.Address where AddressLine2 is NULL.
 SELECT * FROM Person.Address WHERE AddressLine2 IS NULL;
+-- Here we use 'IS NULL' because NULL represents the absence of a value. We cannot use '=' because an unknown value cannot be equal to another unknown.
 
 -- 05. Find sales orders in Sales.SalesOrderHeader where the Freight cost exceeds 500.
 SELECT * FROM Sales.SalesOrderHeader WHERE Freight > 500;
@@ -40,6 +41,16 @@ SELECT * FROM Purchasing.PurchaseOrderHeader WHERE Status = 3;
 
 -- 10. List the top 10 products with the highest Weight in Production.Product.
 SELECT TOP 10 * FROM Production.Product ORDER BY Weight DESC;
+/* We use 'ORDER BY Weight DESC' to sort products from heaviest to lightest.
+   Without 'ORDER BY', the 'TOP' clause would simply return the first 10 random rows it encounters, rather than the actual heaviest items.
+   'ORDER BY' is used to rank the results from the highest to the lowest count (DESC),
+
+   ORDER BY is a clause used to sort the result set of a query in either ascending (ASC) or descending (DESC) order. 
+   It is essential because SQL tables are based on set theory, meaning rows have no inherent order. 
+   Beyond simple sorting, it is used for:
+      1. Presentation: Making data readable for end-users.
+      2. Logic: It is required for 'TOP' or 'OFFSET/FETCH' to yield meaningful results.
+      3. Analytics: It defines the sequence for Window Functions (e.g., Running Totals).*/
 
 -- 11. Find all credit cards in Sales.CreditCard with the CardType 'Vista'.
 SELECT * FROM Sales.CreditCard WHERE CardType = 'Vista';
@@ -77,13 +88,23 @@ SELECT * FROM Person.Person WHERE MiddleName LIKE '_.';
 
 -- 21. Concatenate FirstName, MiddleName, and LastName (handle NULLs using COALESCE).
 SELECT * FROM Person.Person;
-SELECT FirstName + ' ' + COALESCE(MiddleName + ' ', '') + LastName AS FullName FROM Person.Person;
--- MiddleName is wrapped in COALESCE because it is the only NULLable column. FirstName and LastName are mandatory (NOT NULL), so they don't need protection.
--- Adding a space inside COALESCE ensures we don't get double spaces when the MiddleName is missing (NULL).
-/*
-The COALESCE function evaluates a list of arguments in order and returns the first non-null value it encounters. If all arguments in the list are NULL, the function returns NULL.
-Syntax: SELECT COALESCE(expression\_1, expression\_2, ..., expression\_n) AS ... 
-*/
+SELECT FirstName + ' ' + COALESCE(MiddleName + ' ', '') + LastName AS FullDisplayName FROM Person.Person;
+/* DEFINITIONS:
+   1. CONCATENATION (+): 
+	  In T-SQL, the '+' operator joins strings together. 
+      In SQL Server, 'String + NULL' always results in NULL. 
+      This is why one missing MiddleName can "break" the entire full name string.
+
+   2. COALESCE: This function evaluates a list of arguments and returns the 
+      FIRST non-null value it finds. It acts as a safety net for optional data.
+
+   LOGIC EXPLANATION:
+      * 'FirstName' and 'LastName' are NOT NULL (mandatory), so they are safe to use directly.
+      * 'MiddleName' is NULLable (optional). We wrap it in COALESCE to provide an empty string ('') if the data is missing, preventing the entire result from becoming NULL.
+
+   SMART SPACING: We place the space INSIDE the COALESCE: COALESCE(MiddleName + ' ', '').
+      * IF MiddleName exists: It prints "MiddleName " (with a space).
+      * IF MiddleName is NULL: It prints nothing (''), avoiding a double space between First and Last name. */
 
 -- 22. Calculate the price margin (ListPrice minus StandardCost) for every product.
 SELECT Name, 
@@ -96,14 +117,25 @@ FROM Production.Product;
 SELECT JobTitle,
        REPLACE(JobTitle, 'Production', 'Manufacturing') AS NewJobTitle 
 FROM HumanResources.Employee
+/* The REPLACE function is used to swap a specific substring within a string with a new value. It is case-sensitive depending on the database collation.
+   
+   SYNTAX:
+   REPLACE(string_expression, string_pattern, string_replacement)
+    1. string_expression: The column or text we want to search (e.g., JobTitle).
+    2. string_pattern: The specific text we want to find (e.g., 'Production').
+    3. string_replacement: The new text that will replace the pattern (e.g., 'Manufacturing') */
 
 -- 24. Extract the first 15 characters of the Comment column in Production.ProductReview.
 SELECT LEFT(Comments, 15) AS fifteen FROM Production.ProductReview;
 
 -- 25. Find the length of the longest PasswordHash in the Person.Password table.
 SELECT PasswordHash,
-       LEN(PasswordHash) AS passLength
+       MAX(LEN(PasswordHash)) AS passLength
 FROM Person.Password;
+/* The LEN function returns the number of characters in a string, excluding trailing spaces. It is vital for data validation, such as 
+   checking if passwords or identifiers meet specific length requirements.
+   To find the "longest" value, we wrap LEN() inside the MAX() function. 
+   MAX() is an aggregate function that looks at all the results of LEN() across all rows and picks the highest number */
 
 -- 26. Convert the AccountNumber in Sales.Customer to lowercase.
 SELECT LOWER(AccountNumber) AS lowcaseAccNum
@@ -113,6 +145,17 @@ FROM Sales.Customer;
 SELECT Freight,
        ROUND(Freight, -1) AS RoundedFreight
 FROM Sales.SalesOrderHeader;
+/* The ROUND(numeric_expression, length) function rounds a value to a specified precision.
+
+   WHY THE NEGATIVE NUMBER (-1)?
+    1. Positive length: Rounds to the RIGHT of the decimal point (fractions).
+    2. Zero length: Rounds to the nearest integer.
+    3. Negative length: Rounds to the LEFT of the decimal point (tens, hundreds).
+
+   RULES FOR NEGATIVE VALUES:
+    * Use -1 to round to the nearest 10 (makes the last digit 0).
+    * Use -2 to round to the nearest 100 (makes the last two digits 0).
+    * Use -3 to round to the nearest 1000, and so on. */
 
 -- 28. Display the first 6 digits of CardNumber followed by 'XXXX-XXXX'.
 SELECT * FROM Sales.CreditCard;
@@ -124,8 +167,9 @@ FROM Sales.CreditCard;
 SELECT * FROM Production.Product;
 SELECT ProductID,
        Name,
-       SQUARE(ListPrice) AS aquarePrice
+       SQUARE(ListPrice) AS squarePrice
 FROM Production.Product;
+/* The SQUARE function returns the square of a given numeric value (n raised to the power of 2) */
 
 -- 30. Display LastName and the lowercase version of LastName side-by-side.
 SELECT * FROM Person.Person;
@@ -138,13 +182,11 @@ SELECT * FROM Person.EmailAddress;
 SELECT EmailAddress,
        CHARINDEX('@', EmailAddress) AS AtSymbolPosition
 FROM Person.EmailAddress;
-/*
-The CHARINDEX function searches for a specific substring (or character) inside another string and returns its starting position as an integer.
-CHARINDEX(substring, string, [start\_location])
-substring: The characters you are looking for (e.g., '@').
-string: The column or text you are searching within.
-start_location (Optional): The position where the search starts. If omitted, it starts at the beginning.
-*/
+/* The CHARINDEX function searches for a specific substring (or character) inside another string and returns its starting position as an integer.
+   CHARINDEX(substring, string, [start\_location]):
+     * substring: The characters you are looking for (e.g., '@').
+     * string: The column or text you are searching within.
+     * start_location (Optional): The position where the search starts. If omitted, it starts at the beginning */
 
 -- 32. Create an "Employee Code": First 2 letters of JobTitle + Last 3 digits of BusinessEntityID.
 SELECT * FROM HumanResources.Employee;
@@ -156,6 +198,8 @@ SELECT * FROM Production.Product;
 SELECT ListPrice,
        ROUND(ListPrice / 2.0, 4) AS DividedAndRoundedPrice -- best to divide with decimal number so we gat a decimal too
 FROM Production.Product;
+/* We divide by '2.0' instead of '2' to force "Implicit Conversion" to a decimal type.
+   Using a decimal divisor ensures we maintain precision before rounding */
 
 -- 34. Use REVERSE on the Name column of the Production.Product table.
 SELECT * FROM Production.Product;
@@ -176,20 +220,31 @@ SELECT * FROM Production.Product;
 SELECT ProductNumber,
        RTRIM(ProductNumber) AS CleanedProductNumber 
 FROM Production.Product;
+/* RTRIM(string_expression) removes all blank spaces from the RIGHT side of a string
+   LTRIM(string_expression) does the same for the LEFT side
+   TRIM(string_expression) removes spaces from BOTH sides (available in newer SQL versions) */
 
 -- 38. Extract the Year from HireDate using SUBSTRING (treat date as string).
 SELECT HireDate,
        SUBSTRING(CAST(HireDate AS VARCHAR), 1, 4) AS YearFromSubstring        
 FROM HumanResources.Employee;
-/*
-The CAST function is used to convert a value of one data type (like a Number or Date) into another data type (like String/Text). This is necessary when you want to use a function that only accepts a specific type of data.
-Syntax: CAST(expression\ AS\ target\_data\_type)
-expression: The column or value you want to change.
-target_data_type: The new type you want (e.g., VARCHAR for text, INT for whole numbers, DECIMAL for numbers with dots).
-*/
+/* The SUBSTRING function is designed for text (strings). Since 'HireDate' is a Date type, we must first "convert" it into a string (VARCHAR) using CAST.
+
+   LOGIC:
+   1. CAST(HireDate AS VARCHAR): Changes 2026-02-05 (Date) -> "2026-02-05" (Text)
+   2. SUBSTRING(..., 1, 4): Starts at the 1st character and takes the first 4 digits
+
+   CAST(expression AS target_type):
+     * expression: The data you are changing (HireDate)
+     * target_type: What it becomes (VARCHAR for text) */
 
 -- 39. Calculate the Absolute (ABS) difference between the Bonus and CommissionPct.
 SELECT ABS(CommissionPct - Bonus) AS AbsoluteDifference FROM Sales.SalesPerson;
+/* The ABS(numeric_expression) function returns the absolute (positive) value of a specified numeric expression. It essentially removes the 
+   minus sign from any negative result.
+
+   We use ABS here because we want to know the "distance" or "gap" between Bonus and CommissionPct. 
+   Without ABS, if CommissionPct is smaller than Bonus, we would get a negative number, which is often confusing in business reports */
 
 -- 40. Create a label: "Vendor: [Name] - Rating: [CreditRating]".
 SELECT * FROM Purchasing.Vendor;
@@ -197,6 +252,9 @@ SELECT Name,
        CreditRating, 
        'Vendor: ' + Name + ' - Rating: ' + CAST(CreditRating AS VARCHAR) AS VendorLabel
 FROM Purchasing.Vendor;
+/* To combine text (VARCHAR) with a number (INT), we MUST use the CAST function to convert the numeric value into text first.
+
+   Without 'CAST(CreditRating AS VARCHAR)', SQL Server would try to mathematically add the string 'Vendor: ' to the number, resulting in a Conversion Error */
 
 -- ============================================================================
 -- LEVEL 3: ADVANCED DATES & TIME (41 - 60)
@@ -215,9 +273,11 @@ SELECT SalesOrderID,
        DATENAME(weekday, OrderDate) AS DayName
 FROM Sales.SalesOrderHeader
 WHERE DATENAME(weekday, OrderDate) = 'Friday';
+-- The DATENAME(interval, date) function returns a character string that represents the specified part of a date (e.g., Year, Month, Weekday)
 
 -- 43. Add exactly 100 days to the current system date (GETDATE).
 SELECT DATEADD(day, 100, GETDATE()) AS DateIn100Days;
+-- The DATEADD(interval, number, date) function adds a specific numerical value to a date part (interval) of an existing date
 
 -- 44. Extract only the Hour (DATEPART) from the ModifiedDate column in Person.Person.
 SELECT * FROM Person.Person;
@@ -225,6 +285,7 @@ SELECT FirstName,
 	   LastName, 
 	   DATEPART(hour, ModifiedDate) AS hours
 FROM Person.Person;
+-- The DATEPART(interval, date) function returns an integer representing the specified part of the date
 
 -- 45. Find employees who were hired more than 15 years ago.
 SELECT * FROM HumanResources.Employee;
@@ -241,15 +302,16 @@ SELECT ProductID,
        FORMAT(ListPrice, 'C', 'de-DE') AS GermanPriceFormat -- C = standard numeric format string for valute
 FROM Production.Product
 WHERE ListPrice > 0;
+/* The FORMAT function is used to convert numeric or date values into strings formatted according to specific cultures
+   1. 'C': The standard numeric format string for Currency
+   2. 'de-DE': The culture code for Germany. This ensures the Euro symbol (€) is used and that decimals are separated by commas (e.g., 1.000,50 €) */
 
 -- 47. Retrieve all sales orders that were placed at exactly 12:00 PM (Noon).
 SELECT SalesOrderID, 
        OrderDate 
 FROM Sales.SalesOrderHeader
 WHERE CAST(OrderDate AS TIME) = '12:00:00';
-/*
-To find a specific time in a DATETIME column, we can use the CAST function to isolate the TIME portion or use DATEPART to check the specific hour and minute.
-*/
+/* To find a specific time in a DATETIME column, we can use the CAST function to isolate the TIME portion or use DATEPART to check the specific hour and minute */
 
 -- 48. Find employees born in leap years (e.g., 1980, 1984, 1988).
 SELECT BusinessEntityID, 
@@ -258,14 +320,17 @@ SELECT BusinessEntityID,
 FROM HumanResources.Employee
 WHERE (YEAR(BirthDate) % 4 = 0 AND YEAR(BirthDate) % 100 <> 0) 
    OR (YEAR(BirthDate) % 400 = 0);
-/*
-1. YEAR(BirthDate): Extracts the 4-digit year from the date.
-2. MODULO OPERATOR (%): Used to check for divisibility.
-3. LEAP YEAR ALGORITHM: 
-   - A year is a leap year if it is divisible by 4.
-   - However, years divisible by 100 are NOT leap years, unless they are also divisible by 400.
-4. FILTERING: The WHERE clause applies these rules to isolate birth years with 366 days.
-*/
+/* A Leap Year occurs every 4 years to keep our calendar in alignment with Earth's revolutions around the Sun. However, the rule has specific exceptions.
+   
+   Modulo Operator %:
+     * The '%' operator returns the remainder of a division
+     * 'Year % 4 = 0' means the year is perfectly divisible by 4
+
+   THE LEAP YEAR ALGORITHM EXPLAINED:
+   1. (YEAR % 4 = 0 AND YEAR % 100 <> 0): Most leap years are divisible by 4 but centuries (like 1900) are NOT, even though they are divisible by 4.
+   2. OR (YEAR % 400 = 0): Centuries ARE leap years ONLY if they are divisible by 400 (e.g., 2000 was a leap year)
+   WHY THIS MATTERS: 
+   This demonstrates the ability to implement complex business rules and mathematical algorithms directly within a SQL filter */
 
 -- 49. Calculate the age of an employee at the time they were hired (HireDate - BirthDate).
 SELECT * FROM HumanResources.Employee;
@@ -279,12 +344,10 @@ SELECT SalesOrderID,
        OrderDate,
        EOMONTH(OrderDate) AS EndOfMonth
 FROM Sales.SalesOrderHeader;
-/*
-The EOMONTH function returns the last day of the month that contains a specified date. It is extremely useful for financial reporting and calculating deadlines that fall at the end of a month.
-Syntax: EOMONTH(startDate, [mnthToAdd])
-start_date: The date you are checking (e.g., OrderDate).
-month_to_add (Optional): An integer representing the number of months to add to the start date before finding the last day. If you put 1, it gives you the last day of the next month.
-*/
+/* The EOMONTH function returns the last day of the month that contains a specified date. It is extremely useful for financial reporting and calculating deadlines that fall at the end of a month.
+   Syntax: EOMONTH(startDate, [mnthToAdd])
+     * start_date: The date you are checking (e.g., OrderDate).
+     * month_to_add (Optional): An integer representing the number of months to add to the start date before finding the last day. If you put 1, it gives you the last day of the next month */
 
 -- 51. Find orders that were placed during the weekend (Saturday or Sunday).
 SELECT * FROM Sales.SalesOrderHeader;
@@ -299,12 +362,28 @@ SELECT BusinessEntityID,
        BirthDate,
        FORMAT(BirthDate, 'dddd, dd. MMMM yyyy', 'en-US') AS FormattedBirthDate
 FROM HumanResources.Employee;
+/* The FORMAT function allows for highly specific date representations using tokens like 'dddd', 'MMMM', and 'yyyy'
+
+   SYNTAX:
+   1. VALUE: The column or data you want to format (e.g., ListPrice, HireDate)
+   2. FORMAT_STRING: A pattern that defines how the data should look
+      * 'C' = Currency (adds symbols, thousand separators, and decimals)
+      * 'D' = Long Date pattern
+      * 'dd/MM/yyyy' = Custom date pattern (day/month/year)
+   3. CULTURE (Optional): A string that specifies the language/region (e.g., 'en-US', 'de-DE')
+   
+   FORMAT TOKENS EXPLAINED:
+     1. 'dddd': Returns the full name of the day (e.g., 'Monday')
+     2. 'dd.': Returns the day of the month as two digits followed by a dot
+     3. 'MMMM': Returns the full name of the month (e.g., 'June')
+     4. 'yyyy': Returns the full 4-digit year (e.g., '1982') */
 
 -- 53. Extract the Week Number (DATEPART) for every order in 2013.
 SELECT SalesOrderID,
        DATEPART(week, OrderDate) AS weekNumber
 FROM Sales.SalesOrderHeader
 WHERE YEAR(OrderDate) = 2013;
+-- The DATEPART(week, date) function returns an integer that represents the week of the year (1 to 53)
 
 -- 54. Calculate the difference in hours between OrderDate and DueDate.
 SELECT SalesOrderID, 
@@ -322,13 +401,15 @@ SELECT CreditCardID,
        ExpYear,
        DATEDIFF(day, GETDATE(), EOMONTH(DATEFROMPARTS(ExpYear, ExpMonth, 1))) AS DaysUntilExpiry
 FROM Sales.CreditCard;
-/*
-The DATEFROMPARTS function returns a date value from the specified year, month, and day. It is much safer and cleaner than trying to combine strings with plus signs or slashes.
-Syntax: DATEFROMPARTS(year, month, day)
-year: A 4-digit integer (e.g., 2024).
-month: An integer from 1 to 12.
-day: An integer from 1 to 31 (depending on the month).
-*/
+/* The DATEFROMPARTS function returns a date value from the specified year, month, and day. It is much safer and cleaner than trying to combine strings with plus signs or slashes.
+   
+   Syntax: DATEFROMPARTS(year, month, day)
+     * year: A 4-digit integer (e.g., 2024)
+     * month: An integer from 1 to 12
+     * day: An integer from 1 to 31 (depending on the month) 
+
+   The function requires a Year, Month, and Day to create a valid date object. Since Credit Cards only provide Month and Year, we provide '1' as a 
+   placeholder day (the 1st of the month). This allows the EOMONTH function to then correctly identify the actual last day of that specific month.*/
 
 -- 57. Find orders placed in the 2nd Quarter of any year (April, May, June).
 SELECT SalesOrderID, 
@@ -345,11 +426,11 @@ SELECT BusinessEntityID,
        DATENAME(weekday, HireDate) AS HireDay,
        DATEADD(week, DATEDIFF(week, 0, HireDate) + 1, 0) AS NextMonday
 FROM HumanResources.Employee;
-/*
-1. DATEDIFF(day, 0, HireDate) calculates days since 1900-01-01 (a Monday).
-2. Dividing by 7 and adding 1 finds the start of the NEXT week.
-3. DATEADD then reconstructs that specific Monday.
-*/
+/* SQL Server's base date '0' is Monday, January 1st, 1900.
+   
+   1. DATEDIFF(week, 0, HireDate): Calculates how many full weeks have passed since that original Monday
+   2. + 1: Increases the week count by one to move into the upcoming week
+   3. DATEADD(week, ..., 0): Adds that total number of weeks back to the original Monday (0), effectively landing on the next Monday in the calendar */
 
 -- 59. Extract the Birth Year of employees as a numeric value (YEAR).
 SELECT BusinessEntityID, 
@@ -381,23 +462,18 @@ SELECT ExpYear,
 FROM Sales.CreditCard
 GROUP BY ExpYear
 ORDER BY ExpYear;
-/*
-   LOGIC: 
-   1. GROUP BY ExpYear: Groups all credit cards by their expiry year.
-   2. COUNT(DISTINCT CardType): Counts only the different types of cards within that year.
-*/
+/* 1. GROUP BY ExpYear: This is a data-processing step. It collapses multiple rows into single buckets based on the year, allowing us to perform calculations (like COUNT) on each group.
+   2. ORDER BY ExpYear: This is a presentation-level step. It sorts the already grouped results in ascending order so the report is easy to read */
 
 -- 63. Calculate the average Freight cost per ShipMethodID.
 SELECT ShipMethodID, 
        AVG(Freight) AS AvgFreight
 FROM Sales.SalesOrderHeader
 GROUP BY ShipMethodID;
-/* 
-   LOGIC: 
-   1. SELECT ShipMethodID: To show which shipping method we are looking at.
-   2. AVG(Freight): To calculate the average cost for that group.
-   3. GROUP BY ShipMethodID: To separate the calculations by each shipping method.
-*/
+/* LOGIC: 
+     1. SELECT ShipMethodID: To show which shipping method we are looking at
+     2. AVG(Freight): To calculate the average cost for that group
+     3. GROUP BY ShipMethodID: To separate the calculations by each shipping method */
 
 -- 64. Display the Minimum and Maximum SubTotal for each SalesPersonID.
 SELECT SalesPersonID,
@@ -406,15 +482,14 @@ SELECT SalesPersonID,
 FROM Sales.SalesOrderHeader
 WHERE SalesPersonID IS NOT NULL
 GROUP BY SalesPersonID;
-/*
-   LOGIC: 
-   1. GROUP BY SalesPersonID: Creates a bucket for each salesperson.
-   2. MIN(SubTotal): Finds the smallest order amount for that person.
-   3. MAX(SubTotal): Finds the largest order amount for that person.
+/* LOGIC: 
+      1. GROUP BY SalesPersonID: Creates a bucket for each salesperson.
+      2. MIN(SubTotal): Finds the smallest order amount for that person.
+      3. MAX(SubTotal): Finds the largest order amount for that person.
 
-When using aggregate functions (like MIN, MAX, SUM), any column in the SELECT list that is not inside a function must be included in the GROUP BY clause.
-Why? SQL cannot display a specific SalesOrderID (which changes for every row) alongside a MIN(SubTotal) that is calculated for a whole group of people. It would be like trying to list every student's ID next to the entire class's average grade—it doesn't fit in one row!
-*/
+   When using aggregate functions (like MIN, MAX, SUM), any column in the SELECT list that is not inside a function must be included in the GROUP BY clause.
+   Why? SQL cannot display a specific SalesOrderID (which changes for every row) alongside a MIN(SubTotal) that is calculated for a whole group of people. 
+   It would be like trying to list every student's ID next to the entire class's average grade—it doesn't fit in one row */
 
 -- 65. Sum the total Weight of products for each Class (H, M, L).
 SELECT Class, 
@@ -422,12 +497,10 @@ SELECT Class,
 FROM Production.Product
 WHERE Weight IS NOT NULL AND Class IS NOT NULL
 GROUP BY Class;
-/* 
-   LOGIC: 
-   1. GROUP BY Class: Segregates products into High, Medium, and Low categories.
-   2. SUM(Weight): Calculates the total combined weight for all products in that class.
-   3. WHERE Class IS NOT NULL: Removes products that don't have a defined class.
-*/
+/* LOGIC: 
+     1. GROUP BY Class: Segregates products into High, Medium, and Low categories
+     2. SUM(Weight): Calculates the total combined weight for all products in that class
+     3. WHERE Class IS NOT NULL: Removes products that don't have a defined class */
 
 -- 66. Find Departments that have an average VacationHours greater than 50.
 SELECT d.Name AS DepartmentName, 
@@ -440,12 +513,10 @@ JOIN HumanResources.Department d
 WHERE edh.EndDate IS NULL
 GROUP BY d.Name
 HAVING AVG(e.VacationHours) > 50;
-/*
-   LOGIC: 
-   1. JOIN three tables to connect Employees to their Department names.
-   2. GROUP BY Department Name.
-   3. Use HAVING to filter groups where the calculated average is > 50.
-*/
+/* LOGIC: 
+     1. JOIN three tables to connect Employees to their Department names
+     2. GROUP BY Department Name
+     3. Use HAVING to filter groups where the calculated average is > 50 */
 
 -- 67. Count how many products belong to each Style (W, M, U).
 SELECT Style, 
@@ -453,12 +524,10 @@ SELECT Style,
 FROM Production.Product
 WHERE Style IS NOT NULL
 GROUP BY Style;
-/* 
-   LOGIC: 
-   1. SELECT Style: The category we want to see.
-   2. COUNT(*): Counts all products in each category.
-   3. GROUP BY Style: Necessary to collapse individual products into groups.
-*/
+/* LOGIC: 
+     1. SELECT Style: The category we want to see
+     2. COUNT(*): Counts all products in each category
+     3. GROUP BY Style: Necessary to collapse individual products into groups */
 
 -- 68. Calculate the total TaxAmt for each year.
 SELECT YEAR(OrderDate) AS OrderYear, 
@@ -466,12 +535,10 @@ SELECT YEAR(OrderDate) AS OrderYear,
 FROM Sales.SalesOrderHeader
 GROUP BY YEAR(OrderDate)
 ORDER BY OrderYear;
-/* 
-   LOGIC: 
-   1. YEAR(OrderDate): Extracts the year from the full date.
-   2. SUM(TaxAmt): Adds up all tax amounts for each year group.
-   3. GROUP BY YEAR(OrderDate): Collapses all orders into yearly buckets.
-*/
+/* LOGIC: 
+     1. YEAR(OrderDate): Extracts the year from the full date
+     2. SUM(TaxAmt): Adds up all tax amounts for each year group
+     3. GROUP BY YEAR(OrderDate): Collapses all orders into yearly buckets */
 
 -- 69. Find the CustomerID who has placed the highest number of orders (Top 1).
 SELECT TOP 1 CustomerID, 
@@ -480,11 +547,10 @@ FROM Sales.SalesOrderHeader
 GROUP BY CustomerID
 ORDER BY OrderCount DESC;
 /* LOGIC: 
-   1. SELECT TOP 1: Filters the final result to show only the single highest row.
-   2. COUNT(SalesOrderID): Counts how many orders each customer has made.
-   3. GROUP BY CustomerID: Aggregates the orders for each individual customer.
-   4. ORDER BY Count DESC: Places the person with the most orders at the very top.
-*/
+     1. SELECT TOP 1: Filters the final result to show only the single highest row
+     2. COUNT(SalesOrderID): Counts how many orders each customer has made
+     3. GROUP BY CustomerID: Aggregates the orders for each individual customer
+     4. ORDER BY Count DESC: Places the person with the most orders at the very top*/
 
 -- 70. Display only those Cities that have exactly 1 address registered.
 SELECT City, 
@@ -493,10 +559,9 @@ FROM Person.Address
 GROUP BY City
 HAVING COUNT(*) = 1;
 /* LOGIC: 
-   1. GROUP BY City: Groups all addresses by their city name.
-   2. COUNT(*): Counts how many address records exist in each city.
-   3. HAVING COUNT(*) = 1: Filters the groups to show only those where the count is exactly one.
-*/
+     1. GROUP BY City: Groups all addresses by their city name
+     2. COUNT(*): Counts how many address records exist in each city
+     3. HAVING COUNT(*) = 1: Filters the groups to show only those where the count is exactly one */
 
 -- 71. Sum the Bonus amounts for each JobTitle in HumanResources.Employee.
 SELECT e.JobTitle, 
@@ -505,10 +570,9 @@ FROM HumanResources.Employee AS e
 JOIN Sales.SalesPerson AS sp ON e.BusinessEntityID = sp.BusinessEntityID
 GROUP BY e.JobTitle;
 /* LOGIC: 
-   1. JOIN Employee & SalesPerson: Links job titles to their respective bonus data.
-   2. SUM(Bonus): Adds up the total bonus money for each category.
-   3. GROUP BY JobTitle: Collapses the results based on the employee's role.
-*/
+     1. JOIN Employee & SalesPerson: Links job titles to their respective bonus data
+     2. SUM(Bonus): Adds up the total bonus money for each category
+     3. GROUP BY JobTitle: Collapses the results based on the employee's role */
 
 -- 72. Count how many products are stored on each Shelf in the warehouse.
 SELECT Shelf, 
@@ -516,10 +580,9 @@ SELECT Shelf,
 FROM Production.ProductInventory
 GROUP BY Shelf;
 /* LOGIC: 
-   1. SELECT Shelf, COUNT(*): Selects the shelf identifier and counts items on it.
-   2. FROM Production.ProductInventory: The table where stock locations are stored.
-   3. GROUP BY Shelf: Groups the inventory records by their physical shelf location.
-*/
+     1. SELECT Shelf, COUNT(*): Selects the shelf identifier and counts items on it
+     2. FROM Production.ProductInventory: The table where stock locations are stored
+     3. GROUP BY Shelf: Groups the inventory records by their physical shelf location */
 
 -- 73. Find the average TaxRate for each StateProvinceID.
 SELECT StateProvinceID, 
@@ -527,9 +590,8 @@ SELECT StateProvinceID,
 FROM Sales.SalesTaxRate
 GROUP BY StateProvinceID;
 /* LOGIC: 
-   1. AVG(TaxRate): Calculates the mathematical average of the tax percentages.
-   2. GROUP BY StateProvinceID: Groups the tax data by state/province code.
-*/
+     1. AVG(TaxRate): Calculates the mathematical average of the tax percentages
+     2. GROUP BY StateProvinceID: Groups the tax data by state/province code */
 
 -- 74. Sum all DiscountPct values by the Discount Type in Sales.SpecialOffer.
 SELECT [Type], 
@@ -537,9 +599,8 @@ SELECT [Type],
 FROM Sales.SpecialOffer
 GROUP BY [Type];
 /* LOGIC: 
-   1. SUM(DiscountPct): Totals all discount percentages for a specific category.
-   2. GROUP BY [Type]: Groups the offers by their classification (e.g., 'No Discount', 'Volume Discount').
-*/
+     1. SUM(DiscountPct): Totals all discount percentages for a specific category
+     2. GROUP BY [Type]: Groups the offers by their classification (e.g., 'No Discount', 'Volume Discount') */
 
 -- 75. List the years in which more than 5,000 orders were placed.
 SELECT YEAR(OrderDate) AS OrderYear, 
@@ -548,10 +609,9 @@ FROM Sales.SalesOrderHeader
 GROUP BY YEAR(OrderDate)
 HAVING COUNT(*) > 5000;
 /* LOGIC: 
-   1. YEAR(OrderDate): Extracts the year to create yearly groups.
-   2. COUNT(*): Counts the total number of orders placed in each year.
-   3. HAVING COUNT(*) > 5000: Filters the years to only show those with high order volume.
-*/
+     1. YEAR(OrderDate): Extracts the year to create yearly groups
+     2. COUNT(*): Counts the total number of orders placed in each year
+     3. HAVING COUNT(*) > 5000: Filters the years to only show those with high order volume */
 
 -- 76. Find the lowest ListPrice for each ProductModelID.
 SELECT ProductModelID, 
@@ -560,10 +620,9 @@ FROM Production.Product
 WHERE ProductModelID IS NOT NULL
 GROUP BY ProductModelID;
 /* LOGIC: 
-   1. MIN(ListPrice): Finds the lowest price within a specific group.
-   2. WHERE ProductModelID IS NOT NULL: Removes products that don't belong to a specific model.
-   3. GROUP BY ProductModelID: Aggregates the prices based on the product model.
-*/
+     1. MIN(ListPrice): Finds the lowest price within a specific group
+     2. WHERE ProductModelID IS NOT NULL: Removes products that don't belong to a specific model
+     3. GROUP BY ProductModelID: Aggregates the prices based on the product model */
 
 -- 77. Count the total number of Male (M) vs Female (F) employees.
 SELECT Gender, 
@@ -571,9 +630,8 @@ SELECT Gender,
 FROM HumanResources.Employee
 GROUP BY Gender;
 /* LOGIC: 
-   1. SELECT Gender, COUNT(*): Identifies the gender and counts the people in that group.
-   2. GROUP BY Gender: Separates the employee table into 'M' and 'F' buckets.
-*/
+     1. SELECT Gender, COUNT(*): Identifies the gender and counts the people in that group
+     2. GROUP BY Gender: Separates the employee table into 'M' and 'F' buckets */
 
 -- 78. Calculate the average SickLeaveHours per Department.
 SELECT d.Name, 
@@ -584,10 +642,9 @@ JOIN HumanResources.Department AS d ON edh.DepartmentID = d.DepartmentID
 WHERE edh.EndDate IS NULL
 GROUP BY d.Name;
 /* LOGIC: 
-   1. JOIN Employee, EmployeeDepartmentHistory, and Department: Connects hours to names.
-   2. AVG(SickLeaveHours): Calculates the average sick leave for the whole department.
-   3. GROUP BY d.Name: Groups the results by the actual name of the department.
-*/
+     1. JOIN Employee, EmployeeDepartmentHistory, and Department: Connects hours to names
+     2. AVG(SickLeaveHours): Calculates the average sick leave for the whole department
+     3. GROUP BY d.Name: Groups the results by the actual name of the department */
 
 -- 79. Find the total sales (TotalDue) for each Quarter of 2013.
 SELECT DATEPART(quarter, OrderDate) AS Quarter, 
@@ -596,11 +653,10 @@ FROM Sales.SalesOrderHeader
 WHERE YEAR(OrderDate) = 2013
 GROUP BY DATEPART(quarter, OrderDate);
 /* LOGIC: 
-   1. WHERE YEAR(OrderDate) = 2013: Limits the data to the specific year.
-   2. DATEPART(quarter, OrderDate): Extracts the quarter (1, 2, 3, or 4).
-   3. SUM(TotalDue): Totals the revenue for each quarter.
-   4. GROUP BY DATEPART(quarter, OrderDate): Groups the results chronologically by quarter.
-*/
+     1. WHERE YEAR(OrderDate) = 2013: Limits the data to the specific year
+     2. DATEPART(quarter, OrderDate): Extracts the quarter (1, 2, 3, or 4)
+     3. SUM(TotalDue): Totals the revenue for each quarter
+     4. GROUP BY DATEPART(quarter, OrderDate): Groups the results chronologically by quarter */
 
 -- 80. Display CustomerIDs that have spent a grand total of more than $100,000.
 SELECT CustomerID, 
@@ -609,10 +665,9 @@ FROM Sales.SalesOrderHeader
 GROUP BY CustomerID
 HAVING SUM(TotalDue) > 100000;
 /* LOGIC: 
-   1. SUM(TotalDue): Adds up every dollar a customer has ever spent.
-   2. GROUP BY CustomerID: Aggregates all orders for each unique customer.
-   3. HAVING SUM(TotalDue) > 100000: Filters for "VIP" customers who exceeded the threshold.
-*/
+     1. SUM(TotalDue): Adds up every dollar a customer has ever spent
+     2. GROUP BY CustomerID: Aggregates all orders for each unique customer
+     3. HAVING SUM(TotalDue) > 100000: Filters for "VIP" customers who exceeded the threshold */
 -- ============================================================================
 -- LEVEL 5: RELATIONAL JOINS & DATA MAPPING (81 - 100)
 -- ============================================================================
@@ -708,23 +763,21 @@ SELECT e.BusinessEntityID AS EmployeeID,
 FROM HumanResources.Employee e
 JOIN HumanResources.Employee m 
     ON e.OrganizationNode.GetAncestor(1) = m.OrganizationNode;
-/*
-   Logic: 
-   1. FROM HumanResources.Employee AS e (This represents the SUBORDINATE)
-   2. JOIN HumanResources.Employee AS m (This represents the MANAGER)
-   3. ON e.ManagerID = m.BusinessEntityID (Link the worker's manager ID to the manager's personal ID)
+/* LOGIC: 
+     1. FROM HumanResources.Employee AS e (This represents the SUBORDINATE)
+     2. JOIN HumanResources.Employee AS m (This represents the MANAGER)
+     3. ON e.ManagerID = m.BusinessEntityID (Link the worker's manager ID to the manager's personal ID)
 
-GetAncestor(n) Function
-   1. DATA TYPE: Works specifically with the 'HierarchyID' data type.
-   2. PURPOSE: It is used to navigate tree-like structures (e.g., Company Org Charts).
-   3. LOGIC:
-      - It returns a hierarchy node that is 'n' levels above the current node.
-      - GetAncestor(1) = The immediate parent/manager.
-      - GetAncestor(2) = The grandparent/director.
-   4. USAGE IN SELF JOIN: 
-      By setting 'Employee.GetAncestor(1) = Manager.Node', we are essentially saying:
-      "Find the person whose position is exactly one level above this employee."
-*/
+   GetAncestor(n) Function
+     * DATA TYPE: Works specifically with the 'HierarchyID' data type
+     * PURPOSE: It is used to navigate tree-like structures (e.g., Company Org Charts)
+     * LOGIC:
+        - It returns a hierarchy node that is 'n' levels above the current node
+        - GetAncestor(1) = The immediate parent/manager
+        - GetAncestor(2) = The grandparent/director
+     * USAGE IN SELF JOIN: 
+        By setting 'Employee.GetAncestor(1) = Manager.Node', we are essentially saying:
+        "Find the person whose position is exactly one level above this employee" */
 
 -- 90. Join Product and Vendor via the Purchasing.ProductVendor table.
 SELECT * FROM Production.Product;
@@ -785,10 +838,9 @@ JOIN Production.ProductCostHistory pch
     ON p.ProductID = pch.ProductID
 ORDER BY p.Name, pch.StartDate;
 /* LOGIC:
-   1. SELECT p.Name: To know which product we are looking at.
-   2. SELECT pch.StandardCost and pch.StartDate: To see the cost and when it began.
-   3. JOIN on ProductID: Links the product to its historical cost records.
-*/
+     1. SELECT p.Name: To know which product we are looking at
+     2. SELECT pch.StandardCost and pch.StartDate: To see the cost and when it began
+     3. JOIN on ProductID: Links the product to its historical cost records */
 
 -- 95. Join Department and EmployeeDepartmentHistory to show all names in the 'IT' department.
 SELECT * FROM HumanResources.Department;
@@ -803,10 +855,9 @@ JOIN HumanResources.EmployeeDepartmentHistory edh
 WHERE d.Name = 'Information Services' 
   AND edh.EndDate IS NULL;
 /* LOGIC:
-   1. JOIN Department (d) and EmployeeDepartmentHistory (edh) on DepartmentID.
-   2. FILTER by Department Name = 'Information Services'.
-   3. FILTER for Current Employees where EndDate IS NULL.
-*/
+     1. JOIN Department (d) and EmployeeDepartmentHistory (edh) on DepartmentID
+     2. FILTER by Department Name = 'Information Services'
+     3. FILTER for Current Employees where EndDate IS NULL */
 
 -- 96. Join SalesTaxRate and StateProvince to show the Tax Rate for each State name.
 SELECT * FROM Sales.SalesTaxRate;
@@ -834,16 +885,13 @@ JOIN Production.ProductPhoto AS pp
     ON ppp.ProductPhotoID = pp.ProductPhotoID;
 
 /* LOGIC:
-   - Goal: Connect Products to their images.
-   - The Problem: A Product can have many photos, and a Photo could potentially 
-     be used for many products. They cannot be linked directly.
-   - The Solution: We use a "Bridge" (Junction) table called 'ProductProductPhoto'.
-   - The Chain:
-     1. Product (p) links to Bridge (ppp) via [ProductID].
-     2. Bridge (ppp) links to ProductPhoto (pp) via [ProductPhotoID].
-   - Key Detail: We use [Primary] in brackets because 'Primary' is a reserved 
-     SQL keyword.
-*/
+   * Goal: Connect Products to their images.
+   * The Problem: A Product can have many photos, and a Photo could potentially be used for many products. They cannot be linked directly.
+   * The Solution: We use a "Bridge" (Junction) table called 'ProductProductPhoto'.
+   * The Chain:
+       1. Product (p) links to Bridge (ppp) via [ProductID].
+       2. Bridge (ppp) links to ProductPhoto (pp) via [ProductPhotoID].
+   * Key Detail: We use [Primary] in brackets because 'Primary' is a reserved SQL keyword */
 
 -- 98. Join Store and SalesPerson to see which salesperson is assigned to which store.
 SELECT * FROM Sales.Store;
