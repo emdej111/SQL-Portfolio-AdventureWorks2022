@@ -956,6 +956,21 @@ JOIN Sales.SalesOrderHeader soh
 GROUP BY p.FirstName, 
          p.LastName 
 HAVING SUM(soh.TotalDue) > 2000000;
+/* 1. GROUP BY vs. WHERE (The Timing Rule):
+        * WHERE filters individual rows BEFORE they are summed up. It doesn't know the TotalSales yet
+        * HAVING filters the "Buckets" AFTER SQL has calculated the SUM()
+        GOLDEN RULE: we use WHERE for raw data, and HAVING for aggregated results (like SUM > 2M)
+
+   2. THE LEVEL OF DETAIL (Why SELECT columns must be in GROUP BY):
+        * If we ask for FirstName and LastName but don't Group By them, SQL gets confused
+        * It wouldn't know which name to attach the single TotalSales number to
+        * By adding them to GROUP BY, we tell SQL "Create exactly one row for every unique combination of name and surname."
+
+   3. THE CATEGORY vs. CALCULATION RULE:
+        * GROUP BY = The "Buckets" (Categories like Name, ID, or City)
+        * SUM/SELECT/HAVING = The "Action" (What we do inside those buckets)
+        * We cannot group by a SUM because the sum doesn't exist until the grouping is finished */
+
 
 -- 102. Most Popular Products by Category
 -- Display the Product Category Name and the total number of items sold (OrderQty).
@@ -976,6 +991,19 @@ JOIN Sales.SalesOrderDetail sod
     ON p.ProductID = sod.ProductID
 GROUP BY pc.Name
 ORDER BY TotalQuantitySold DESC;
+/* 1. THE CHAIN JOIN (Connecting the Dots):
+        * We start at 'ProductCategory' but the sales data is far away in 'SalesOrderDetail'
+        * Like a bridge, we must cross through 'Subcategory' and 'Product' to get there
+        RULE: Each JOIN must have a matching ID (PK/FK) to keep the data integrity
+
+   2. THE LEVEL OF DETAIL (Group By Name):
+        * We want to see the Name of the Category, so that is our "Bucket"
+        * Even though we crossed 4 tables, SQL only cares about the final bucket we defined: 'pc.Name'. All products from all subcategories will be thrown into this one bucket
+
+   3. THE CALCULATION (Summing the Quantity):
+        * Once the buckets are ready, we use SUM(OrderQty) to count every item sold
+        * ORDER BY: Finally, we sort by 'TotalQuantitySold' DESC to put the best-selling categories at the very top */
+
 
 -- 103. Average Freight Cost per Country
 -- Calculate the average freight cost (Freight) for each country (CountryRegion).
@@ -988,6 +1016,19 @@ JOIN Sales.SalesTerritory st
 JOIN Person.CountryRegion cr 
     ON st.CountryRegionCode = cr.CountryRegionCode
 GROUP BY cr.Name;
+/* 1. THE GEOGRAPHIC BRIDGE (Why these joins?):
+       * 'SalesOrderHeader' knows the cost (Freight), but it doesn't know the Country Name
+       * It only knows the 'TerritoryID'. So we jump to 'SalesTerritory'
+       * 'SalesTerritory' knows the 'CountryRegionCode', but still not the full Name
+       * Finally, we join 'CountryRegion' to get the human-readable Country Name
+
+   2. BUCKETS & LEVEL OF DETAIL (Group By Country Name):
+       * We want the average per Country, so 'cr.Name' is our "Bucket"
+       * SQL takes thousands of individual orders, looks at which country they belong to, and throws them into the corresponding country bucket
+       * RULE: Since 'cr.Name' is what we want to see in the final list, it MUST be in GROUP BY
+
+   3. THE CALCULATION (Avg vs. Each Row):
+       * WHERE vs AVG: SQL doesn't use 'WHERE' here because we aren't filtering single shipping costs. We are calculating the "Average" (AVG) of all costs found inside each country's bucket AFTER the grouping is done */
 
 -- 104. High-Value Customers
 -- Find the CustomerID of customers who have placed more than 25 orders.
@@ -997,6 +1038,19 @@ SELECT CustomerID,
 FROM Sales.SalesOrderHeader
 GROUP BY CustomerID
 HAVING COUNT(SalesOrderID) > 25;
+/* 1. THE "BUCKET" LOGIC (GROUP BY):
+      * We want to analyze data per customer, so 'CustomerID' is our "Bucket"
+      * Every single order in the table is thrown into a bucket labeled with its CustomerID
+     RULE: Since 'CustomerID' is what we want to display, it must be in GROUP BY to define the level of detail.
+
+  2. THE "TIMING" RULE (WHERE vs. HAVING):
+     * We CANNOT use 'WHERE' to filter the order count. Why? 
+         Because 'WHERE' acts on individual rows before they are counted
+     * 'HAVING' is the filter for the buckets AFTER SQL has finished counting
+     * Think of it as: "Only keep the buckets that ended up with more than 25 items"
+
+  3. THE CALCULATION (COUNT):
+     Inside each bucket, SQL performs the action: counting the SalesOrderIDs */
 
 -- 105. Inventory Value by Location
 -- Display the Warehouse Location Name and the total value of stock (Quantity * StandardCost).
@@ -1009,6 +1063,21 @@ JOIN Production.ProductInventory pi
 JOIN Production.Product p 
     ON pi.ProductID = p.ProductID
 GROUP BY l.Name;
+/* 1. THE MULTI-JOIN BRIDGE (Connecting Data):
+     * We start with 'Location' (l) to get the human-readable Warehouse names
+     * We join 'ProductInventory' (pi) to see HOW MANY items are in those locations
+     * We join 'Product' (p) to find out the COST of each item
+     * RULE: Without this bridge, we would have quantities without prices, or names without stock data.
+
+  2. BUCKETS & LEVEL OF DETAIL (GROUP BY):
+     - We want to see the total value "per location", so 'l.Name' is our "Bucket"
+     - Every product found in the inventory is thrown into the bucket of the warehouse it currently sits in
+     - RULE: Since 'l.Name' is our label in the SELECT list, it MUST be in the GROUP BY clause to define our rows
+
+  3. THE CALCULATION (SUM & Math):
+     - Inside each bucket, SQL performs a row-by-row calculation: (Quantity * StandardCost)
+     - Once all items in the bucket are calculated, SUM() adds them all together to give us the 'TotalStockValue'
+     - WHY NOT WHERE? We can't use WHERE to filter the total value because the math happens during the grouping process, not before */
 
 -- 106. Employee Count by Department
 -- Display each Department Name and the number of employees currently working there (EndDate IS NULL).
@@ -1020,6 +1089,24 @@ JOIN HumanResources.EmployeeDepartmentHistory edh
     ON d.DepartmentID = edh.DepartmentID
 WHERE edh.EndDate IS NULL
 GROUP BY d.Name;
+/* 1. THE HR BRIDGE (Connecting Departments to People):
+     * 'Department' (d) contains the human-readable names of the sectors
+     * 'EmployeeDepartmentHistory' (edh) is the mapping table that links employees to those departments
+     * RULE: We join them on 'DepartmentID' to align names with the actual staff records
+
+  2. THE "WHERE" VS. "HAVING" TIMING (Filtering before Grouping):
+     * 'WHERE edh.EndDate IS NULL': This is our "Current Status" filter
+     * It acts BEFORE the grouping. SQL looks at every historical record and immediately discards anyone who has already left a department (where EndDate is filled)
+     * Only "active" records (where EndDate is NULL) are allowed to proceed to the buckets
+
+  3. BUCKETS & LEVEL OF DETAIL (GROUP BY):
+     * We want the count "per department", so 'd.Name' is our "Bucket"
+     * Every active employee record is thrown into the bucket corresponding to their department
+     * RULE: Since 'd.Name' is in our SELECT list, it MUST be in the GROUP BY clause
+
+  4. THE CALCULATION (COUNT):
+     * Inside each department bucket, SQL counts the 'BusinessEntityID' (the unique ID for each person)
+     * The result is a clean list of how many people currently occupy desks in each sector */
 
 -- 107. Vacation Hours vs. Seniority
 -- Display the JobTitle and the average vacation hours for each position, 
@@ -1030,6 +1117,20 @@ SELECT JobTitle,
 FROM HumanResources.Employee
 GROUP BY JobTitle
 HAVING AVG(VacationHours) > 40;
+/* 1. BUCKETS & LEVEL OF DETAIL (GROUP BY):
+     * Our goal is to see data "per JobTitle", so 'JobTitle' becomes our "Bucket"
+     * Every employee in the table is sorted into a bucket based on their specific role (e.g., 'Accountant', 'Production Technician', 'Design Engineer')
+     * RULE: Since 'JobTitle' is the descriptive label in our SELECT, it must be present in the GROUP BY to define the rows of our report
+
+  2. THE CALCULATION (AVG):
+     * Inside each job title bucket, SQL looks at all the 'VacationHours' of employees in that role and calculates the mean value (Average)
+     * This tells us the "typical" vacation balance for that specific seniority level
+
+  3. THE "TIMING" FILTER (HAVING vs. WHERE):
+     * We CANNOT use 'WHERE' to filter the 40-hour limit
+     * Why? Because 'WHERE' filters individual employees BEFORE we know the average
+     * 'HAVING' is our "After-the-Fact" filter. It looks at the finished buckets and only keeps those where the calculated Average is higher than 40
+     * RULE: If we are filtering the result of an aggregate function (AVG, SUM, COUNT), we MUST use HAVING */
 
 -- 108. Vendor Product Count
 -- Display the Vendor Name and the number of different products they supply to us.
@@ -1040,6 +1141,22 @@ FROM Purchasing.Vendor v
 JOIN Purchasing.ProductVendor pv 
     ON v.BusinessEntityID = pv.BusinessEntityID
 GROUP BY v.Name;
+/* 1. THE PROCUREMENT BRIDGE (Connecting Vendors to Products):
+     * 'Vendor' (v) holds the business names of our suppliers.
+     * 'ProductVendor' (pv) is the link table that tells us exactly 
+       which products are supplied by which vendor.
+     * RULE: We join them on 'BusinessEntityID' to match the names with 
+       their catalog of items.
+
+  2. BUCKETS & LEVEL OF DETAIL (GROUP BY):
+     * We want to see the diversity of products "per vendor", so 'v.Name' is our "Bucket". 
+     * Every product record found in the catalog is sorted into the bucket belonging to its supplier
+     * RULE: Since 'v.Name' is the descriptive label in our SELECT, it must be in the GROUP BY clause to define the rows of our report
+
+  3. THE CALCULATION (COUNT):
+     * Inside each vendor bucket, SQL counts the 'ProductID' entries
+     * This gives us a clear metric: How many different items can we buy from this specific vendor?
+     * WHY NOT WHERE? We are not filtering individual products; we are counting them AFTER they are grouped, so no row-level filter is needed here */
 
 -- 109. Orders by Year and Month
 -- Display the Year and Month of the order and the total number of orders for that period.
@@ -1051,6 +1168,22 @@ SELECT YEAR(OrderDate) AS OrderYear,
 FROM Sales.SalesOrderHeader
 GROUP BY YEAR(OrderDate), MONTH(OrderDate)
 ORDER BY OrderYear, OrderMonth;
+/* 1. THE "BUCKET" LOGIC (GROUP BY):
+     * Here, we aren't grouping by a simple column like 'Name', but by the RESULTS of functions: YEAR() and MONTH()
+     * Every order is sorted into a "Time Bucket" (e.g., Year 2013, Month 5)
+     RULE: Any function used in the SELECT list that isn't part of the calculation (the COUNT) MUST be repeated in the GROUP BY to define our buckets
+
+  2. THE "TIMING" RULE (WHERE vs. GROUP BY):
+     * If we wanted only orders from 2014, we would use 'WHERE' before grouping
+     * But since we want the count for ALL available periods, we skip WHERE and let SQL create buckets for every unique Year/Month combination found
+
+  3. THE CALCULATION (COUNT):
+     * Inside each Year/Month bucket, SQL counts the individual SalesOrderIDs
+     * This gives us the total transaction volume for that specific month
+
+  4. THE PRESENTATION (ORDER BY):
+     * Without ORDER BY, the months might appear randomly (e.g., Month 12 before Month 1)
+     * By ordering by Year first, then Month, we create a chronological timeline that is easy for humans to read */
 
 -- 110. Subcategory Price Comparison
 -- Display the Subcategory Name along with its MAX and MIN ListPrice.
@@ -1062,6 +1195,24 @@ FROM Production.ProductSubcategory ps
 JOIN Production.Product p 
     ON ps.ProductSubcategoryID = p.ProductSubcategoryID
 GROUP BY ps.Name;
+/* 1. THE PRODUCT BRIDGE (Connecting Names to Prices):
+     * 'ProductSubcategory' (ps) contains the names (e.g., 'Mountain Bikes', 'Helmets')
+     * 'Product' (p) contains the actual price tags ('ListPrice')
+     * RULE: We join them on 'ProductSubcategoryID' so we can attach each price to its correct category name
+
+  2. BUCKETS & LEVEL OF DETAIL (GROUP BY):
+     * We want to see the price range "per subcategory", so 'ps.Name' is our "Bucket"
+     * SQL takes every product and throws it into the bucket belonging to its subcategory name
+     * RULE: Since 'ps.Name' is the label we want to display, it must be in the GROUP BY clause
+
+  3. THE CALCULATION (MAX & MIN):
+     * Inside each bucket, SQL performs two actions:
+       - MAX(): Finds the single highest price in that group
+       - MIN(): Finds the single lowest price in that group
+     * This defines the "Price Ceiling" and "Price Floor" for each subcategory
+
+  4. WHY NOT WHERE?
+     * If we used WHERE p.ListPrice > 100, we would be filtering out products BEFORE calculating the range. By skipping WHERE, we ensure our MIN and MAX look at every available product in the bucket */
 
 -- 111. Sales Reason Impact
 -- Which Sales Reason is the most common? Display the Reason Name and the count of associated orders.
@@ -1073,6 +1224,22 @@ JOIN Sales.SalesOrderHeaderSalesReason osr
     ON sr.SalesReasonID = osr.SalesReasonID
 GROUP BY sr.Name
 ORDER BY OrderCount DESC;
+/* 1. THE MARKETING BRIDGE (Linking Reasons to Orders):
+     - 'SalesReason' (sr) contains the descriptions (e.g., 'Price', 'Review', 'Television Advertisement')
+     - 'SalesOrderHeaderSalesReason' (osr) is a mapping table. Since one order can have multiple reasons, this table links each OrderID to a specific ReasonID
+     - RULE: We join them on 'SalesReasonID' to see which "Reason Name" is attached to which actual sales transaction
+
+  2. BUCKETS & LEVEL OF DETAIL (GROUP BY):
+     - We want to see the frequency "per reason", so 'sr.Name' is our "Bucket"
+     - Every time an order is linked to a reason, that record is thrown into the bucket of that specific reason name
+     - RULE: Any column in the SELECT that isn't part of the COUNT (like sr.Name) MUST be in the GROUP BY to define the rows of our summary
+
+  3. THE CALCULATION (COUNT):
+     - Inside each reason bucket, SQL counts the 'SalesOrderID' entries
+     - This tells us exactly how many times a specific reason was cited for a sale
+
+  4. THE INSIGHT (ORDER BY):
+     - By sorting 'OrderCount' in DESC (descending) order, we immediately see the most influential sales drivers at the very top */
 
 -- 112. Customers with Multiple Credit Cards
 -- Find the names of people who have more than one credit card registered in the system.
@@ -1085,6 +1252,20 @@ JOIN Sales.PersonCreditCard pcc
     ON p.BusinessEntityID = pcc.BusinessEntityID
 GROUP BY p.FirstName, p.LastName, p.BusinessEntityID
 HAVING COUNT(pcc.CreditCardID) > 1;
+/* 1. THE IDENTITY TRAP (Why use BusinessEntityID in GROUP BY?):
+     * Imaagine we have two different people named "John Smith". They have different IDs, but the same Name.
+     * If we ONLY group by 'FirstName' and 'LastName', SQL will shove BOTH John Smiths into the SAME BUCKET
+     * It would look like one John Smith has 4 cards, even if they each have 2
+     * By adding 'BusinessEntityID' to the GROUP BY, we ensure that every bucket is unique to the ACTUAL person, even if they share a common name
+
+  2. THE JOIN BRIDGE:
+     * We connect 'Person' (p) with 'PersonCreditCard' (pcc) to see which names own which cards
+     RULE: This is a 1-to-many relationship, as one person can have multiple cards
+
+  3. BUCKETS & TIMING (HAVING vs. WHERE):
+     * GROUP BY: Creates the buckets for each unique person (ID + Name)
+     * COUNT: Counts the cards inside each individual's bucket
+     * HAVING: This is our filter AFTER the counting is done. It discards everyone who has only 1 card, leaving only the "power users" with 2 or more */
 
 -- 113. Total Quantity sold per Color
 -- Calculate the total quantity sold grouped by product color. Ignore NULL colors.
@@ -1125,6 +1306,24 @@ JOIN Sales.SalesTerritory st
     ON soh.TerritoryID = st.TerritoryID
 WHERE soh.ShipDate > soh.DueDate
 GROUP BY st.Name;
+/* 1. THE LOGISTICS BRIDGE (Connecting Orders to Regions):
+     * 'SalesOrderHeader' (soh) contains the dates (ShipDate, DueDate), but it only uses a 'TerritoryID' code
+     * 'SalesTerritory' (st) provides the human-readable names (e.g., 'Northwest', 'France')
+     * RULE: We join them on 'TerritoryID' so we can see which specific regions are struggling with late shipments
+
+  2. THE "WHERE" TIMING (Filtering for Lateness):
+     * 'WHERE soh.ShipDate > soh.DueDate': This filter is the most important part
+     * It acts BEFORE the grouping. SQL checks every order and only lets the "Late" ones pass through to the buckets
+     * Orders that were on time are discarded immediately and never counted
+
+  3. BUCKETS & LEVEL OF DETAIL (GROUP BY):
+     * We want the count "per territory", so 'st.Name' is our "Bucket"
+     * Only the late orders are thrown into the bucket corresponding to their region
+     * RULE: Since 'st.Name' is our label in the SELECT list, it MUST be in the GROUP BY
+
+  4. THE CALCULATION (COUNT):
+     * Inside each territory bucket, SQL counts the 'SalesOrderID' entries
+     * This gives us a clear KPI: How many times did we fail to meet our deadline in this specific territory? */
 
 -- 117. Revenue per Product Model
 -- Display the Product Model Name and the total revenue (LineTotal) generated by that model.
@@ -1147,6 +1346,23 @@ FROM Sales.SalesOrderHeader
 WHERE YEAR(OrderDate) = 2011
 GROUP BY MONTH(OrderDate)
 ORDER BY Month;
+/* 1. THE "WHERE" TIMING (Filtering the Year):
+     * 'WHERE YEAR(OrderDate) = 2011': This filter is applied FIRST
+     * SQL looks at the entire table and immediately throws away any orders that didn't happen in 2011
+     * This makes the grouping much faster because the engine only works with a smaller subset of data
+
+  2. BUCKETS & LEVEL OF DETAIL (GROUP BY):
+     * We want the total revenue "per month", so 'MONTH(OrderDate)' is our "Bucket"
+     * SQL takes every order from 2011 and places it into one of 12 buckets based on its month number (1 to 12)
+     * RULE: Since we used 'MONTH(OrderDate)' in our SELECT list, it must be present in the GROUP BY clause to define our rows
+
+  3. THE CALCULATION (SUM):
+     * Inside each monthly bucket, SQL adds up the 'TotalDue' from every order
+     * The result is the 'MonthlyRevenue' for that specific time period
+
+  4. THE PRESENTATION (ORDER BY):
+     * We order by 'Month' to ensure the report flows chronologically (Jan, Feb, Mar...)
+     * Without this, SQL might show the months in a random order (e.g., May, then August) */
 
 -- 119. Top 3 Selling Subcategories
 -- Find the Top 3 subcategories with the highest total quantity of items sold.
@@ -1175,3 +1391,22 @@ JOIN Person.CountryRegion cr
     ON st.CountryRegionCode = cr.CountryRegionCode
 GROUP BY YEAR(soh.OrderDate), cr.Name
 ORDER BY OrderYear ASC, AnnualSales DESC;
+/* 1. THE GLOBAL BRIDGE (Joining 3 Tables):
+     * We start with 'SalesOrderHeader' (soh) for the money and dates
+     * We jump to 'SalesTerritory' (st) to find out which region code the sales belong to
+     * We finally arrive at 'CountryRegion' (cr) to get the actual Country Names
+     * RULE: Without this chain, we'd have money tied to codes, but we wouldn't know which country (e.g., 'United States' or 'France') is performing best
+
+  2. THE TIME & SPACE BUCKETS (Double Grouping):
+     * This is a "Multi-Level Bucket". We aren't just grouping by Country, and we aren't just grouping by Year. We are grouping by BOTH
+     * SQL creates a unique bucket for every 'Year + Country' combination (e.g., [2011, France], [2011, USA], [2012, France]...)
+     * RULE: Any column/function in the SELECT that isn't summed (Year and Country Name) MUST be in the GROUP BY to define these specific rows
+
+  3. THE CALCULATION (SUM):
+     * Inside each Year/Country bucket, SQL adds up all the 'TotalDue' amounts
+     * This gives us the final 'AnnualSales' figure for that specific territory in that year
+
+  4. THE STRATEGIC SORTING (Double Order By):
+     * ORDER BY OrderYear ASC: We first organize the report chronologically
+     * AnnualSales DESC: Within each year, we put the most profitable country at the top
+     * This allows us to see at a glance who was the "Sales King" of each year */
