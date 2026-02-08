@@ -16,3 +16,20 @@ DESCRIPTION: Comparing individual pay rates against departmental averages.
                - Filter for only current employees (EndDate IS NULL).
 ===============================================================================
 */
+
+SELECT 
+    eph.BusinessEntityID,
+    eph.Rate AS EmployeeRate,
+    edh.DepartmentID,
+    (
+        SELECT AVG(eph2.Rate)
+        FROM HumanResources.EmployeePayHistory AS eph2
+        JOIN HumanResources.EmployeeDepartmentHistory AS edh2 
+            ON eph2.BusinessEntityID = edh2.BusinessEntityID
+        WHERE edh2.DepartmentID = edh.DepartmentID  -- The Correlation
+          AND edh2.EndDate IS NULL
+    ) AS DepartmentAverage
+FROM HumanResources.EmployeePayHistory AS eph
+JOIN HumanResources.EmployeeDepartmentHistory AS edh 
+    ON eph.BusinessEntityID = edh.BusinessEntityID
+WHERE edh.EndDate IS NULL;
