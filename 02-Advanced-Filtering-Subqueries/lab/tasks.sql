@@ -382,12 +382,6 @@ AND CustomerID NOT IN (SELECT CustomerID FROM Sales.SalesOrderHeader WHERE YEAR(
 -- ============================================================================
 -- LEVEL 6: SET OPERATORS & EXISTENCE CHECKS (20 TASKS)
 -- ============================================================================
-
--- 20. Find customers who placed an order in 2011 but NOT in 2012.
-SELECT DISTINCT CustomerID FROM Sales.SalesOrderHeader
-WHERE YEAR(OrderDate) = 2011
-AND CustomerID NOT IN (SELECT CustomerID FROM Sales.SalesOrderHeader WHERE YEAR(OrderDate) = 2012);
-
 -- 21. Use UNION to combine a list of all Product Names and all Category Names into one column.
 SELECT Name FROM Production.Product
 UNION
