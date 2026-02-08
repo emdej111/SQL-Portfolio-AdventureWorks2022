@@ -13,3 +13,12 @@ DESCRIPTION: Identifying territories that exceed the global average order value.
                  AVG(TotalDue) of the entire SalesOrderHeader table.
 ===============================================================================
 */
+
+SELECT st.Name AS TerritoryName,
+       AVG(soh.TotalDue) AS TerritoryAvgOrderValue
+FROM Sales.SalesTerritory st
+JOIN Sales.SalesOrderHeader soh 
+    ON st.TerritoryID = soh.TerritoryID
+GROUP BY st.Name
+HAVING AVG(soh.TotalDue) > (SELECT AVG(TotalDue) FROM Sales.SalesOrderHeader)
+ORDER BY TerritoryAvgOrderValue DESC;
