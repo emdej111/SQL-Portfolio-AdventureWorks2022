@@ -13,3 +13,20 @@ DESCRIPTION: Identifying inactive customer accounts for marketing re-engagement.
                - Alternatively, try solving it with NOT EXISTS.
 ===============================================================================
 */
+-- Solution 1
+SELECT CustomerID FROM Sales.Customer
+EXCEPT
+SELECT CustomerID FROM Sales.SalesOrderHeader;
+
+-- Solution 2
+SELECT c.CustomerID
+FROM Sales.Customer c
+WHERE NOT EXISTS (
+    SELECT 1 
+    FROM Sales.SalesOrderHeader s 
+    WHERE s.CustomerID = c.CustomerID);
+
+-- Solution 3
+SELECT CustomerID
+FROM Sales.Customer
+WHERE CustomerID NOT IN (SELECT CustomerID FROM Sales.SalesOrderHeader WHERE CustomerID IS NOT NULL);
