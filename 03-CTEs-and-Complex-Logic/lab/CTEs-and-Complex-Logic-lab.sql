@@ -3,7 +3,7 @@
 SQL BOOTCAMP: 03-CTEs & COMPLEX LOGIC (40 CHALLENGES)
 PROJECT:       AdventureWorks Mastery Lab
 AUTHOR:        emdej111 - Monika Jurak
-DATE:          07-01-2026
+DATE:          09-02-2026
 DESCRIPTION:   Mastering Common Table Expressions (CTEs) and Window Functions.
 INSTRUCTIONS:  Solve each task below the comment.
 ===============================================================================
@@ -96,6 +96,21 @@ ORDER BY TotalRevenue DESC;
 SELECT * FROM HumanResources.Employee;
 SELECT * FROM HumanResources.EmployeeDepartmentHistory;
 SELECT * FROM HumanResources.Department;
+
+WITH hireYear AS (
+                  SELECT BusinessEntityID, 
+                         HireDate
+                  FROM HumanResources.Employee
+                  WHERE YEAR(HireDate) = 2008
+                 )
+SELECT hy.BusinessEntityID,
+       d.Name AS DepartmentName
+FROM hireYear hy 
+JOIN HumanResources.EmployeeDepartmentHistory edh 
+    ON hy.BusinessEntityID = edh.BusinessEntityID
+JOIN HumanResources.Department d 
+    ON edh.DepartmentID = d.DepartmentID
+WHERE edh.EndDate IS NULL;
 
 -- 07. Write a CTE that lists all unique cities, then use it to count how many customers live in each city.
 SELECT * FROM Person.Address;
