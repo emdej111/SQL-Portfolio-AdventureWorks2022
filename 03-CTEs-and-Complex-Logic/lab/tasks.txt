@@ -12,29 +12,80 @@ INSTRUCTIONS:  Solve each task below the comment.
 -- ============================================================================
 -- LEVEL 7: COMMON TABLE EXPRESSIONS (CTEs) - (20 TASKS)
 -- ============================================================================
+-- 01. Create a CTE that finds the average product price, then use it in the main query to filter products above that average.
+SELECT * FROM Production.Product;
 
--- 01. Create a CTE that finds the average product price, then use it in the main query 
---     to filter products above that average.
 -- 02. Write a CTE to calculate total sales per customer, then find customers with more than $50,000 in sales.
+SELECT * FROM Sales.SalesOrderHeader;
+
 -- 03. Use a CTE to join Person and Employee, then select only managers from that result.
--- 04. Create two CTEs: one for 'Red' products and one for 'Black' products. 
---     JOIN them on a common column (like size or category).
+SELECT * FROM Person.Person;
+SELECT * FROM HumanResources.Employee;
+
+-- 04. Create two CTEs: one for 'Red' products and one for 'Black' products. JOIN them on a common column (like size or category).
+SELECT * FROM Production.Product;
+
 -- 05. Use a CTE to calculate monthly sales for 2011, then find the month with the highest revenue.
+SELECT * FROM Sales.SalesOrderHeader;
+
 -- 06. Create a CTE for all employees hired in 2008 and use it to find their department names.
+SELECT * FROM HumanResources.Employee;
+SELECT * FROM HumanResources.EmployeeDepartmentHistory;
+SELECT * FROM HumanResources.Department;
+
 -- 07. Write a CTE that lists all unique cities, then use it to count how many customers live in each city.
+SELECT * FROM Person.Address;
+SELECT * FROM Sales.Customer;
+SELECT * FROM Person.BusinessEntityAddress;
+
 -- 08. Use a CTE to pre-calculate the total weight of orders, then filter for orders over 500kg.
+SELECT * FROM Sales.SalesOrderDetail;
+SELECT * FROM Production.Product;
+
 -- 09. Create a CTE that identifies products with no sales, then use it to list their current stock levels.
+SELECT * FROM Production.Product;
+SELECT * FROM Sales.SalesOrderDetail;
+SELECT * FROM Production.ProductInventory;
+
 -- 10. Write a "Recursive CTE" to show all management levels starting from the CEO (BusinessEntityID = 1).
+SELECT * FROM HumanResources.Employee;
+
 -- 11. Create a CTE for product prices with tax (10%), then find products where the taxed price is > $2000.
+SELECT * FROM Production.Product;
+
 -- 12. Use a CTE to rank territories by sales, then select only the top-performing territory.
+SELECT * FROM Sales.SalesTerritory;
+SELECT * FROM Sales.SalesOrderHeader;
+
 -- 13. Write a CTE that simplifies the join of 4 tables (Sales, Person, Address, Territory).
+SELECT * FROM Sales.SalesOrderHeader;
+SELECT * FROM Person.Person;
+SELECT * FROM Person.Address;
+SELECT * FROM Sales.SalesTerritory;
+
 -- 14. Create a CTE to find the last order date for each customer, then find customers who haven't ordered in 2 years.
+SELECT * FROM Sales.SalesOrderHeader;
+SELECT * FROM Sales.Customer;
+
 -- 15. Use multiple CTEs (separated by commas) to build a complex sales report comparing 2011 and 2012.
+SELECT * FROM Sales.SalesOrderHeader;
+
 -- 16. Create a CTE to find the average weight per category, then find products heavier than their category average.
+SELECT * FROM Production.Product;
+SELECT * FROM Production.ProductSubcategory;
+
 -- 17. Use a CTE to list all employees and their age, then group them by 10-year age buckets.
+SELECT * FROM HumanResources.Employee;
+
 -- 18. Write a CTE that finds duplicate email addresses (if any) in the system.
+SELECT * FROM Person.EmailAddress;
+
 -- 19. Create a CTE for sales performance by salesperson, then find those who achieved > 120% of their bonus.
+SELECT * FROM Sales.SalesPerson;
+SELECT * FROM Sales.SalesOrderHeader;
+
 -- 20. Use a CTE to clean data: format phone numbers before selecting them in the main query.
+SELECT * FROM Person.PersonPhone;
 
 -- ============================================================================
 -- LEVEL 8: WINDOW FUNCTIONS & ANALYTICAL LOGIC (20 TASKS)
