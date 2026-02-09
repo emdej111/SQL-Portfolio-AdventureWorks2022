@@ -15,18 +15,82 @@ INSTRUCTIONS:  Solve each task below the comment.
 -- 01. Create a CTE that finds the average product price, then use it in the main query to filter products above that average.
 SELECT * FROM Production.Product;
 
+WITH avgPrice AS (
+		          SELECT AVG(ListPrice) AS GlobalAvg
+                  FROM Production.Product
+				 )
+
+SELECT p.ProductID, 
+       p.Name,
+       p.ListPrice
+FROM Production.Product p, avgPrice a
+WHERE p.ListPrice > a.GlobalAvg
+ORDER BY p.ListPrice DESC; 
+
 -- 02. Write a CTE to calculate total sales per customer, then find customers with more than $50,000 in sales.
 SELECT * FROM Sales.SalesOrderHeader;
+
+WITH totalSalesPerCustomer AS (
+                                SELECT CustomerID, 
+                                       SUM(TotalDue) AS totalOrdNum
+                                FROM Sales.SalesOrderHeader
+                                GROUP BY CustomerID
+                              )
+SELECT CustomerID, 
+       totalOrdNum 
+FROM totalSalesPerCustomer 
+WHERE totalOrdNum > 50000
+ORDER BY totalOrdNum DESC;
 
 -- 03. Use a CTE to join Person and Employee, then select only managers from that result.
 SELECT * FROM Person.Person;
 SELECT * FROM HumanResources.Employee;
 
+WITH joinEmpPer AS (
+                     SELECT p.FirstName,
+                            p.LastName,
+                            e.JobTitle
+                     FROM Person.Person p
+                     JOIN HumanResources.Employee e
+                        ON p.BusinessEntityID = e.BusinessEntityID
+                   )
+SELECT CONCAT(FirstName, ' ', LastName, ' - ', JobTitle) AS ManagerProfile
+FROM joinEmpPer
+WHERE JobTitle LIKE '%Manager%';
+
 -- 04. Create two CTEs: one for 'Red' products and one for 'Black' products. JOIN them on a common column (like size or category).
 SELECT * FROM Production.Product;
+WITH redProducts AS (
+                     SELECT ProductID, Size
+                     FROM Production.Product
+                     WHERE Color = 'Red'
+                    ),
+   blackProducts AS (
+                     SELECT ProductID, Size
+                     FROM Production.Product
+                     WHERE Color = 'Black'
+                    )
+SELECT r.ProductID AS RedProductID,
+       b.ProductID AS BlackProductID,
+       r.Size
+FROM redProducts r
+    JOIN blackProducts b ON r.Size = b.Size
+WHERE r.Size IS NOT NULL;
 
 -- 05. Use a CTE to calculate monthly sales for 2011, then find the month with the highest revenue.
 SELECT * FROM Sales.SalesOrderHeader;
+
+WITH mnthSales AS ( 
+                   SELECT MONTH(OrderDate) AS SaleMonth,
+                          SUM(TotalDue) AS TotalRevenue
+                   FROM Sales.SalesOrderHeader
+                   WHERE YEAR(OrderDate) = 2011       
+                   GROUP BY MONTH(OrderDate)     
+                  )
+SELECT TOP 1 SaleMonth, 
+             TotalRevenue
+FROM mnthSales
+ORDER BY TotalRevenue DESC;  
 
 -- 06. Create a CTE for all employees hired in 2008 and use it to find their department names.
 SELECT * FROM HumanResources.Employee;
