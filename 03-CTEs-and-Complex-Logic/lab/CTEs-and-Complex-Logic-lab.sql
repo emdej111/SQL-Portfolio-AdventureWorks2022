@@ -117,30 +117,143 @@ SELECT * FROM Person.Address;
 SELECT * FROM Sales.Customer;
 SELECT * FROM Person.BusinessEntityAddress;
 
+WITH unqCity AS (
+                 SELECT DISTINCT(City) 
+                 FROM Person.Address
+                ) --uc
+
+SELECT uc.City,
+       COUNT(c.CustomerID) AS CustomerCount
+FROM unqCity uc
+    JOIN Person.Address a ON uc.City = a.City
+    JOIN Person.BusinessEntityAddress bea ON a.AddressID = bea.AddressID
+    JOIN Sales.Customer c ON bea.BusinessEntityID = c.PersonID 
+GROUP BY uc.City
+ORDER BY CustomerCount DESC;
+
 -- 08. Use a CTE to pre-calculate the total weight of orders, then filter for orders over 500kg.
 SELECT * FROM Sales.SalesOrderDetail;
 SELECT * FROM Production.Product;
+
+WITH OrderWeights AS (
+                      SELECT sd.SalesOrderID,
+                             SUM(sd.OrderQty * ISNULL(p.Weight, 0)) AS TotalOrderWeight
+                      FROM Sales.SalesOrderDetail sd
+                          JOIN Production.Product p ON sd.ProductID = p.ProductID
+                      GROUP BY sd.SalesOrderID
+                     )
+SELECT SalesOrderID, 
+       TotalOrderWeight
+FROM OrderWeights
+WHERE TotalOrderWeight > 500
+ORDER BY TotalOrderWeight DESC;
 
 -- 09. Create a CTE that identifies products with no sales, then use it to list their current stock levels.
 SELECT * FROM Production.Product;
 SELECT * FROM Sales.SalesOrderDetail;
 SELECT * FROM Production.ProductInventory;
 
+WITH UnsoldProducts AS (
+                        SELECT ProductID, 
+                               Name
+                        FROM Production.Product
+                        WHERE ProductID NOT IN (
+                                                SELECT DISTINCT ProductID 
+                                                FROM Sales.SalesOrderDetail
+                                               ) --up
+                       )
+SELECT up.Name AS ProductName,
+       pi.Quantity AS StockLevel,
+       pi.Shelf,
+       pi.Bin
+FROM UnsoldProducts up
+    JOIN Production.ProductInventory pi ON up.ProductID = pi.ProductID
+ORDER BY pi.Quantity DESC;
+
 -- 10. Write a "Recursive CTE" to show all management levels starting from the CEO (BusinessEntityID = 1).
 SELECT * FROM HumanResources.Employee;
+
+WITH mngLevel AS (
+                  SELECT BusinessEntityID, 
+                         OrganizationNode,
+                         JobTitle, 
+                         1 AS HierarchyLevel
+                  FROM HumanResources.Employee
+                  WHERE BusinessEntityID = 1
+
+                  UNION ALL
+
+                  SELECT e.BusinessEntityID, 
+                         e.OrganizationNode,
+                         e.JobTitle, 
+                         m.HierarchyLevel + 1
+                  FROM HumanResources.Employee e
+                    INNER JOIN mngLevel m ON e.OrganizationNode.GetAncestor(1) = m.OrganizationNode
+                 )
+SELECT HierarchyLevel,
+       JobTitle,
+       BusinessEntityID
+FROM mngLevel
+ORDER BY HierarchyLevel;
 
 -- 11. Create a CTE for product prices with tax (10%), then find products where the taxed price is > $2000.
 SELECT * FROM Production.Product;
 
+WITH TaxedProducts AS (
+                       SELECT Name,
+                              ListPrice,
+                              (ListPrice * 1.10) AS PriceWithTax
+                       FROM Production.Product
+                       WHERE ListPrice > 0 
+                      )
+SELECT Name, 
+       ListPrice, 
+       PriceWithTax
+FROM TaxedProducts
+WHERE PriceWithTax > 2000
+ORDER BY PriceWithTax DESC;
+
 -- 12. Use a CTE to rank territories by sales, then select only the top-performing territory.
 SELECT * FROM Sales.SalesTerritory;
 SELECT * FROM Sales.SalesOrderHeader;
+
+WITH territoryBySale AS (
+                         SELECT TerritoryID, 
+                                Name, 
+                                SalesYTD
+                         FROM Sales.SalesTerritory
+                        )
+SELECT TOP 1 TerritoryID, 
+             Name, 
+             SalesYTD
+FROM territoryBySale
+ORDER BY SalesYTD DESC;
 
 -- 13. Write a CTE that simplifies the join of 4 tables (Sales, Person, Address, Territory).
 SELECT * FROM Sales.SalesOrderHeader;
 SELECT * FROM Person.Person;
 SELECT * FROM Person.Address;
 SELECT * FROM Sales.SalesTerritory;
+
+WITH DetailedOrders AS (
+                        SELECT soh.SalesOrderID,
+                               p.FirstName + ' ' + p.LastName AS CustomerName,
+                               a.City,
+                               st.Name AS TerritoryName,
+                               soh.TotalDue
+                        FROM Sales.SalesOrderHeader soh
+                            JOIN Person.Person p ON soh.CustomerID = p.BusinessEntityID
+                            JOIN Person.Address a ON soh.BillToAddressID = a.AddressID
+                            JOIN Sales.SalesTerritory st ON soh.TerritoryID = st.TerritoryID
+                        )
+SELECT SalesOrderID,
+       CustomerName,
+       City,
+       TerritoryName,
+       TotalDue
+FROM DetailedOrders
+WHERE TotalDue > 5000
+ORDER BY TotalDue DESC;
 
 -- 14. Create a CTE to find the last order date for each customer, then find customers who haven't ordered in 2 years.
 SELECT * FROM Sales.SalesOrderHeader;
