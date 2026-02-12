@@ -259,25 +259,129 @@ ORDER BY TotalDue DESC;
 SELECT * FROM Sales.SalesOrderHeader;
 SELECT * FROM Sales.Customer;
 
+WITH lastCustomerOrder AS (
+                           SELECT CustomerID, 
+                                  MAX(OrderDate) AS LastDate 
+                           FROM Sales.SalesOrderHeader
+                           GROUP BY CustomerID
+                          )
+SELECT c.CustomerID, 
+       lco.LastDate,
+       DATEDIFF(YEAR, lco.LastDate, GETDATE()) AS YearsSinceLastOrder
+FROM Sales.Customer c
+    JOIN lastCustomerOrder lco ON c.CustomerID = lco.CustomerID
+WHERE DATEDIFF(YEAR, lco.LastDate, GETDATE()) >= 2
+ORDER BY lco.LastDate ASC;
+
 -- 15. Use multiple CTEs (separated by commas) to build a complex sales report comparing 2011 and 2012.
 SELECT * FROM Sales.SalesOrderHeader;
+
+WITH Sales2011 AS (
+                   SELECT TerritoryID, 
+                          SUM(TotalDue) AS TotalSales2011
+                   FROM Sales.SalesOrderHeader
+                   WHERE YEAR(OrderDate) = 2011
+                   GROUP BY TerritoryID
+                  ),
+    Sales2012 AS (
+                  SELECT TerritoryID, 
+                         SUM(TotalDue) AS TotalSales2012
+                  FROM Sales.SalesOrderHeader
+                  WHERE YEAR(OrderDate) = 2012
+                  GROUP BY TerritoryID
+                 )
+SELECT st.Name AS TerritoryName,
+       ISNULL(s11.TotalSales2011, 0) AS Sales2011,
+       ISNULL(s12.TotalSales2012, 0) AS Sales2012,
+       ISNULL(s12.TotalSales2012, 0) - ISNULL(s11.TotalSales2011, 0) AS Difference
+FROM Sales.SalesTerritory st
+    LEFT JOIN Sales2011 s11 ON st.TerritoryID = s11.TerritoryID
+    LEFT JOIN Sales2012 s12 ON st.TerritoryID = s12.TerritoryID
+ORDER BY Difference DESC;
 
 -- 16. Create a CTE to find the average weight per category, then find products heavier than their category average.
 SELECT * FROM Production.Product;
 SELECT * FROM Production.ProductSubcategory;
 
+WITH CategoryAvgWeight AS (
+                           SELECT ProductSubcategoryID, 
+                                  AVG(Weight) AS AvgWeight
+                           FROM Production.Product
+                           WHERE Weight IS NOT NULL
+                           GROUP BY ProductSubcategoryID
+                          )
+SELECT p.Name AS ProductName,
+       p.Weight AS ProductWeight,
+       caw.AvgWeight AS CategoryAverage,
+       p.ProductSubcategoryID
+FROM Production.Product p
+    JOIN CategoryAvgWeight caw ON p.ProductSubcategoryID = caw.ProductSubcategoryID
+WHERE p.Weight > caw.AvgWeight 
+ORDER BY p.ProductSubcategoryID, p.Weight DESC;
+
 -- 17. Use a CTE to list all employees and their age, then group them by 10-year age buckets.
 SELECT * FROM HumanResources.Employee;
 
+WITH EmployeeAges AS (
+                      SELECT BusinessEntityID,
+                             DATEDIFF(YEAR, BirthDate, GETDATE()) AS Age
+                      FROM HumanResources.Employee
+                     )
+SELECT CAST((Age / 10) * 10 AS VARCHAR) + '-' + CAST((Age / 10) * 10 + 9 AS VARCHAR) AS AgeBucket,
+       COUNT(*) AS EmployeeCount
+FROM EmployeeAges
+GROUP BY (Age / 10) * 10
+ORDER BY AgeBucket;
+
 -- 18. Write a CTE that finds duplicate email addresses (if any) in the system.
 SELECT * FROM Person.EmailAddress;
+
+WITH EmailCounts AS (
+                     SELECT EmailAddress,
+                            COUNT(*) AS OccurrenceCount
+                     FROM Person.EmailAddress
+                     GROUP BY EmailAddress
+                    )
+SELECT EmailAddress, 
+       OccurrenceCount
+FROM EmailCounts
+WHERE OccurrenceCount > 1
+ORDER BY OccurrenceCount DESC;
 
 -- 19. Create a CTE for sales performance by salesperson, then find those who achieved > 120% of their bonus.
 SELECT * FROM Sales.SalesPerson;
 SELECT * FROM Sales.SalesOrderHeader;
 
+WITH SalesPerformance AS (
+                          SELECT BusinessEntityID,
+                                 SalesYTD,
+                                 Bonus,
+                                 (SalesYTD / NULLIF(Bonus, 0)) * 100 AS BonusPerformance
+                          FROM Sales.SalesPerson
+                         )
+SELECT BusinessEntityID,
+       SalesYTD,
+       Bonus,
+       ROUND(BonusPerformance, 2) AS [Performance %]
+FROM SalesPerformance
+WHERE BonusPerformance > 120
+ORDER BY BonusPerformance DESC;
+
 -- 20. Use a CTE to clean data: format phone numbers before selecting them in the main query.
 SELECT * FROM Person.PersonPhone;
+
+WITH CleanedPhones AS (
+                       SELECT BusinessEntityID,
+                              PhoneNumber AS RawPhone,
+                              REPLACE(REPLACE(REPLACE(PhoneNumber, '(', ''), ')', ''), '-', '') AS OnlyNumbers
+                       FROM Person.PersonPhone
+                       )
+SELECT BusinessEntityID,
+       RawPhone,
+       '(' + SUBSTRING(OnlyNumbers, 1, 3) + ') ' + 
+       SUBSTRING(OnlyNumbers, 4, 3) + '-' + 
+       SUBSTRING(OnlyNumbers, 7, 4) AS FormattedPhone
+FROM CleanedPhones;
 
 -- ============================================================================
 -- LEVEL 8: WINDOW FUNCTIONS & ANALYTICAL LOGIC (20 TASKS)
