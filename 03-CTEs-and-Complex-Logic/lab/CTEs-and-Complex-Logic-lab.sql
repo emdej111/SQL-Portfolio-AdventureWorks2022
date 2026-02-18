@@ -16,15 +16,14 @@ INSTRUCTIONS:  Solve each task below the comment.
 SELECT * FROM Production.Product;
 
 WITH avgPrice AS (
-		          SELECT AVG(ListPrice) AS GlobalAvg
+                  SELECT AVG(ListPrice) AS GlobalAvg
                   FROM Production.Product
-				 )
-
+                  )
 SELECT ProductID, 
        Name, 
-	   ListPrice
+       ListPrice
 FROM Production.Product
-WHERE ListPrice > (SELECT AVG(ListPrice) FROM Production.Product);
+WHERE ListPrice > (SELECT GlobalAvg FROM avgPrice);
 
 -- 02. Write a CTE to calculate total sales per customer, then find customers with more than $50,000 in sales.
 SELECT * FROM Sales.SalesOrderHeader;
