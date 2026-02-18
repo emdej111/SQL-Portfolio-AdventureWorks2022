@@ -20,12 +20,11 @@ WITH avgPrice AS (
                   FROM Production.Product
 				 )
 
-SELECT p.ProductID, 
-       p.Name,
-       p.ListPrice
-FROM Production.Product p, avgPrice a
-WHERE p.ListPrice > a.GlobalAvg
-ORDER BY p.ListPrice DESC; 
+SELECT ProductID, 
+       Name, 
+	   ListPrice
+FROM Production.Product
+WHERE ListPrice > (SELECT AVG(ListPrice) FROM Production.Product);
 
 -- 02. Write a CTE to calculate total sales per customer, then find customers with more than $50,000 in sales.
 SELECT * FROM Sales.SalesOrderHeader;
