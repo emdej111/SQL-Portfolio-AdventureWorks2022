@@ -386,12 +386,57 @@ FROM CleanedPhones;
 -- ============================================================================
 
 -- 21. Use ROW_NUMBER() to number every product within its category based on price.
+SELECT * FROM Production.Product;
+
+SELECT Name, ProductSubcategoryID, ListPrice, 
+	ROW_NUMBER() OVER(PARTITION BY ProductSubcategoryID ORDER BY ListPrice DESC) AS productRankInCategory
+FROM Production.Product
+WHERE ProductSubcategoryID IS NOT NULL;
+
 -- 22. Use RANK() to rank salespersons by their bonus amount.
+SELECT * FROM Sales.SalesPerson;
+
+SELECT BusinessEntityID, Bonus,
+	RANK() OVER(ORDER BY Bonus DESC) AS bonusAmountPerSalsperson
+FROM Sales.SalesPerson;
+
 -- 23. Use DENSE_RANK() to rank products by price and notice how it differs from RANK().
+SELECT * FROM Production.Product;
+
+SELECT ProductID, Name, ListPrice,
+	RANK() OVER(ORDER BY ListPrice DESC) AS NormalRank,
+    DENSE_RANK() OVER(ORDER BY ListPrice DESC) AS DenseRank
+FROM Production.Product;
+
 -- 24. Calculate a "Running Total" of Sales (TotalDue) using SUM() OVER (ORDER BY OrderDate).
+SELECT * FROM Sales.SalesOrderHeader;
+
+SELECT SalesOrderID, OrderDate, TotalDue,
+    SUM(TotalDue) OVER(ORDER BY OrderDate) AS RunningTotal
+FROM Sales.SalesOrderHeader;
+
 -- 25. Calculate a "Running Total" of sales per Territory (use PARTITION BY).
+SELECT * FROM Sales.SalesOrderHeader;
+
+SELECT TerritoryID, OrderDate, TotalDue,
+    SUM(TotalDue) OVER(PARTITION BY TerritoryID ORDER BY OrderDate) AS totalPerTerritory
+FROM Sales.SalesOrderHeader;
+
 -- 26. Use LEAD() to show the TotalDue of the next order in the same row as the current order.
+SELECT * FROM Sales.SalesOrderHeader;
+
+SELECT SalesOrderID, OrderDate, TotalDue AS CurrentOrderAmount,
+    LEAD(TotalDue) OVER(ORDER BY OrderDate) AS NextOrderAmount
+FROM Sales.SalesOrderHeader;
+	
 -- 27. Use LAG() to compare today's order value with the previous order's value.
+SELECT * FROM Sales.SalesOrderHeader;
+
+SELECT SalesOrderID, OrderDate, TotalDue AS currentPrice,
+    LAG(TotalDue) OVER(ORDER BY OrderDate) AS previousPrice,
+    TotalDue - LAG(TotalDue) OVER(ORDER BY OrderDate) AS priceDifference
+FROM Sales.SalesOrderHeader;
+
 -- 28. Use FIRST_VALUE() to show the first hire in each department alongside every employee.
 -- 29. Use LAST_VALUE() to find the most expensive product in each category.
 -- 30. Calculate a 3-month "Moving Average" of sales revenue.
