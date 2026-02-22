@@ -1,4 +1,5 @@
-/*
+8333
+	/*
 ===============================================================================
 SQL BOOTCAMP: 03-CTEs & COMPLEX LOGIC (40 CHALLENGES)
 PROJECT:       AdventureWorks Mastery Lab
@@ -438,15 +439,73 @@ SELECT SalesOrderID, OrderDate, TotalDue AS currentPrice,
 FROM Sales.SalesOrderHeader;
 
 -- 28. Use FIRST_VALUE() to show the first hire in each department alongside every employee.
+SELECT * FROM HumanResources.Employee;
+SELECT * FROM HumanResources.EmployeeDepartmentHistory;
+
+-- STEP 1
+SELECT e.BusinessEntityID, edh.DepartmentID, e.HireDate
+FROM HumanResources.Employee AS e
+    JOIN HumanResources.EmployeeDepartmentHistory AS edh 
+        ON e.BusinessEntityID = edh.BusinessEntityID
+WHERE edh.EndDate IS NULL;
+
+-- STEP 2
+SELECT edh.DepartmentID, e.HireDate, e.BusinessEntityID
+FROM HumanResources.Employee AS e
+    JOIN HumanResources.EmployeeDepartmentHistory AS edh 
+        ON e.BusinessEntityID = edh.BusinessEntityID
+WHERE edh.EndDate IS NULL
+ORDER BY edh.DepartmentID, e.HireDate ASC;
+
+-- STEP 3
+SELECT e.BusinessEntityID, 
+       edh.DepartmentID, 
+       e.HireDate AS MyHireDate,
+    FIRST_VALUE(e.HireDate) OVER (PARTITION BY edh.DepartmentID ORDER BY e.HireDate ASC) AS FirstHireInDept
+FROM HumanResources.Employee AS e
+JOIN HumanResources.EmployeeDepartmentHistory AS edh 
+    ON e.BusinessEntityID = edh.BusinessEntityID
+WHERE edh.EndDate IS NULL
+ORDER BY edh.DepartmentID;
+
 -- 29. Use LAST_VALUE() to find the most expensive product in each category.
+SELECT * FROM Production.Product;
+
+SELECT ProductID, ProductSubcategoryID, ListPrice,
+    FIRST_VALUE(ListPrice) OVER(PARTITION BY ProductSubcategoryID ORDER BY ListPrice DESC) AS mostExpensiveProduct
+FROM Production.Product
+WHERE ProductSubcategoryID IS NOT NULL;
+
 -- 30. Calculate a 3-month "Moving Average" of sales revenue.
+SELECT * FROM Sales.SalesOrderHeader;
+
 -- 31. Divide products into 4 price quartiles using NTILE(4).
+SELECT * FROM Production.Product;
+
 -- 32. Find the percentage of total sales each territory contributes using SUM() OVER().
+SELECT * FROM Sales.SalesOrderHeader;
+
 -- 33. Use ROW_NUMBER() to find only the most recent order for every customer without using a subquery.
+SELECT * FROM Sales.SalesOrderHeader;
+
 -- 34. Calculate the difference in days between the current and previous order for each customer (LAG).
+SELECT * FROM Sales.SalesOrderHeader;
+
 -- 35. Rank employees by their length of service within each department.
+SELECT * FROM HumanResources.Employee;
+SELECT * FROM HumanResources.EmployeeDepartmentHistory;
+
 -- 36. Use AVG() OVER() to compare each product's price to the overall company average in the same row.
+SELECT * FROM Production.Product;
+
 -- 37. Find the gap between a salesperson's sales and the salesperson ranked immediately above them.
+SELECT * FROM Sales.SalesPerson;
+
 -- 38. Use NTILE(10) to find the top 10% of customers by spending.
+SELECT * FROM Sales.SalesOrderHeader;
+
 -- 39. Combine CTEs and Window Functions: Rank monthly sales growth year-over-year.
+SELECT * FROM Sales.SalesOrderHeader;
+
 -- 40. Calculate the "Percent Rank" of products by weight within their subcategory.
+SELECT * FROM Production.Product;
