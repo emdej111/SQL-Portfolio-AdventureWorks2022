@@ -18,3 +18,27 @@ DESCRIPTION:  Visualizing organizational management levels via Self-Joins.
 
 SELECT * FROM HumanResources.Employee;
 SELECT * FROM Person.Person;
+
+-- STEP 1: Join Employee table to itself to match Employees with Managers
+WITH EmployeeBase AS (
+                      SELECT e.BusinessEntityID AS EmployeeID,
+                             e.JobTitle,
+                             e.OrganizationNode,
+                             m.BusinessEntityID AS ManagerID
+                      FROM HumanResources.Employee e
+                        LEFT JOIN HumanResources.Employee m 
+                            ON m.OrganizationNode = e.OrganizationNode.GetAncestor(1)
+                      )
+-- STEP 2: Join Person table twice to get full names for both parties
+SELECT eb.EmployeeID,
+       p_emp.FirstName + ' ' + p_emp.LastName AS EmployeeName,
+       eb.JobTitle,
+       COALESCE(p_man.FirstName + ' ' + p_man.LastName, 'TOP LEVEL (CEO)') AS ManagerName
+FROM EmployeeBase eb
+    -- First join to Person for the Employee's name
+    JOIN Person.Person p_emp 
+        ON eb.EmployeeID = p_emp.BusinessEntityID
+    -- Second join to Person for the Manager's name (LEFT JOIN is crucial here)
+    LEFT JOIN Person.Person p_man 
+        ON eb.ManagerID = p_man.BusinessEntityID
+ORDER BY eb.OrganizationNode; -- Sorting by hierarchy level
