@@ -17,3 +17,16 @@ DESCRIPTION:  Tracking price changes over time using Window Functions.
 
 SELECT * FROM Production.Product;
 SELECT * FROM Production.ProductCostHistory;
+
+SELECT p.Name AS ProductName,
+       pch.StandardCost AS CurrentCost,
+       pch.StartDate,
+       -- LAG() pulls data from a previous row without needing a complex self-join
+       -- Syntax: LAG (scalar_expression [,offset] [,default]) OVER ([PARTITION BY partition_expression] ORDER BY sort_expression)
+       LAG(pch.StandardCost) OVER (PARTITION BY pch.ProductID ORDER BY pch.StartDate) AS PreviousCost,
+       pch.StandardCost - LAG(pch.StandardCost) OVER (PARTITION BY pch.ProductID ORDER BY pch.StartDate) AS PriceDelta,
+       CAST((pch.StandardCost - LAG(pch.StandardCost) OVER (PARTITION BY pch.ProductID ORDER BY pch.StartDate)) 
+        / NULLIF(LAG(pch.StandardCost) OVER (PARTITION BY pch.ProductID ORDER BY pch.StartDate), 0) * 100 AS DECIMAL(10,2)) AS PercentChange
+FROM Production.Product p
+JOIN Production.ProductCostHistory pch ON p.ProductID = pch.ProductID
+ORDER BY p.Name, pch.StartDate;
