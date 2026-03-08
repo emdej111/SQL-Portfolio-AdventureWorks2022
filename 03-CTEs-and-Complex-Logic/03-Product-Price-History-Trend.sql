@@ -3,7 +3,7 @@
 FILE NAME:    03-Product-Price-History-Trend.sql
 PROJECT:      AdventureWorks Inventory Strategy
 AUTHOR:       emdej111 - Monika Jurak
-DATE:         09-02-2026
+DATE:         08-03-2026
 DESCRIPTION:  Tracking price changes over time using Window Functions.
 ===============================================================================
 1. GOAL:       Display every price change for products and the delta from the last price.
