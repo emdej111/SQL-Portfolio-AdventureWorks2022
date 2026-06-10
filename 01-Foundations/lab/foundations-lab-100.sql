@@ -360,7 +360,18 @@ WHERE DATENAME(weekday, OrderDate) = 'Friday';
 
 -- 43. Add exactly 100 days to the current system date (GETDATE). 
 SELECT DATEADD(day, 100, GETDATE()) AS DateIn100Days;
--- The DATEADD(interval, number, date) function adds a specific numerical value to a date part (interval) of an existing date
+/* 1. WHAT IT DOES:
+      DATEADD allows us to step forward into the future (positive numbers) or 
+      backward into the past (negative numbers) along a calendar timeline.
+      
+   2. SYNTAX STRUCTURE:
+      DATEADD(datepart, number, date)
+      
+   3. FLEXIBLE INTERVALS (Moving Months and Years):
+      You can easily change the first parameter to target different time horizons:
+      * DATEADD(day, 100, GETDATE())   -> Adds 100 days to today.
+      * DATEADD(month, 3, GETDATE())   -> Adds 3 months to today.
+      * DATEADD(year, 5, GETDATE())    -> Adds 5 years to today. */
 
 -- 44. Extract only the Hour (DATEPART) from the ModifiedDate column in Person.Person.
 SELECT * FROM Person.Person;
@@ -368,7 +379,22 @@ SELECT FirstName,
 	   LastName, 
 	   DATEPART(hour, ModifiedDate) AS hours 
 FROM Person.Person;
--- The DATEPART(interval, date) function returns an integer representing the specified part of the date
+/* 1. WHAT IT DOES:
+      DATEPART acts like a laser scalpel, slicing into a DATETIME object and 
+      extracting a single component as a pure, raw integer (INT).
+      
+   2. HIGH-PRECISION INTERVALS:
+      Unlike DATENAME, it never returns words—only numbers. It is fully compatible 
+      with micro-time units where no shortcut functions exist:
+      * DATEPART(hour, ModifiedDate)        -> Returns 0 to 23
+      * DATEPART(minute, ModifiedDate)      -> Returns 0 to 59
+      * DATEPART(second, ModifiedDate)      -> Returns 0 to 59
+      * DATEPART(millisecond, ModifiedDate) -> Returns 0 to 999
+      
+   3. WHY IT MATTERS (No Shorthands for Time):
+      While SQL Server offers shorthand functions for dates (YEAR(), MONTH(), DAY()), 
+      it DOES NOT provide HOUR() or MINUTE() functions. For time-tracking, DATEPART 
+      is our mandatory tool. */
 
 -- 45. Find employees who were hired more than 15 years ago.
 SELECT * FROM HumanResources.Employee;
@@ -385,9 +411,36 @@ SELECT ProductID,
        FORMAT(ListPrice, 'C', 'de-DE') AS GermanPriceFormat -- C = standard numeric format string for currency
 FROM Production.Product
 WHERE ListPrice > 0;
-/* The FORMAT function is used to convert numeric or date values into strings formatted according to specific cultures
-   1. 'C': The standard numeric format string for Currency
-   2. 'de-DE': The culture code for Germany. This ensures the Euro symbol (€) is used and that decimals are separated by commas (e.g., 1.000,50 €) */
+/* 1. WHAT IT DOES:
+      FORMAT acts as a visual stylist. It takes a raw, ugly database number and 
+      dresses it up according to the linguistic and cultural laws of a specific country.
+      Syntax: FORMAT(value, type_of_data, culture_code)
+      
+   2. THE PARAMETERS DECODED:
+      * 'C' (The Type): Short for "Currency". It tells SQL: "Treat this number as money."
+      * 'de-DE' (The Culture): 
+         - 'de' (lowercase) = The Language (Deutsch)
+         - 'DE' (uppercase) = The Country (Deutschland/Germany)
+         
+   3. THE REGIONAL TRANSFORMATION:
+      When we combine 'C' and 'de-DE', SQL automatically applies German financial rules:
+      - It appends the Euro symbol (€) to the right side of the string.
+      - It swaps commas and periods (using dots for thousands, and commas for decimals).
+        Example: Raw 1234.56 becomes text string '1.234,56 €'
+
+	LETTER   NAME         WHAT IT DOES                            EXAMPLE (1234.5)
+	   -------------------------------------------------------------------------------
+	   'C'      Currency     Adds currency symbol + 2 decimals       1.234,50 €
+	   'P'      Percentage   Multiplies by 100 + adds % sign         123.450,00 %
+	   'N'      Number       Adds thousands separators + 2 decs      1.234,50
+	   'F'      Fixed-point  Enforces exact decimals, NO thousands   1234,50
+	   'D'      Decimal      Pads integers with leading zeros        (Only for INTs)
+	   
+	   THE PRECISION TRICK:
+	   We can aslo append a number directly to the letter to override the default 2 decimals:
+	   * 'P0' -> Percentage with ZERO decimals (e.g., 8%)
+	   * 'C3' -> Currency with THREE decimals (e.g., 1.234,500 €)
+	   * 'D6' -> Forces an integer to be 6 digits long (e.g., 45 becomes 000045) */
 
 -- 47. Retrieve all sales orders that were placed at exactly 12:00 PM (Noon).
 SELECT SalesOrderID, 
@@ -475,8 +528,31 @@ SELECT SalesOrderID,
 FROM Sales.SalesOrderHeader;
 
 -- 55. Find all persons who last updated their data (ModifiedDate) in 2014.
-SELECT BusinessEntityID, FirstName, LastName, ModifiedDate FROM Person.Person
+SELECT BusinessEntityID, 
+	   FirstName, 
+	   LastName, 
+	   ModifiedDate 
+FROM Person.Person
 WHERE YEAR(ModifiedDate) = 2014;
+
+-- or
+
+SELECT BusinessEntityID, 
+	   FirstName, 
+	   LastName, 
+	   ModifiedDate 
+FROM Person.Person
+WHERE DATEPART(year, ModifiedDate) = 2014;
+
+/* 1. YEAR() is a specialized shortcut function. Because its entire purpose is 
+      hardcoded to extract ONLY the year, it does not need a 'unit' parameter 
+      like DATEPART() or DATENAME() do. It only needs the date column itself.
+      
+   2. The Date Shortcuts:
+      SQL Server provides exactly three fast shortcuts for basic calendar dates:
+      * YEAR(ModifiedDate)  -> Equal to DATEPART(year, ModifiedDate)
+      * MONTH(ModifiedDate) -> Equal to DATEPART(month, ModifiedDate)
+      * DAY(ModifiedDate)   -> Equal to DATEPART(day, ModifiedDate) */
 
 -- 56. Calculate how many days are left until a CreditCard expires from today's date.
 SELECT CreditCardID,
@@ -484,15 +560,22 @@ SELECT CreditCardID,
        ExpYear,
        DATEDIFF(day, GETDATE(), EOMONTH(DATEFROMPARTS(ExpYear, ExpMonth, 1))) AS DaysUntilExpiry
 FROM Sales.CreditCard;
-/* The DATEFROMPARTS function returns a date value from the specified year, month, and day. It is much safer and cleaner than trying to combine strings with plus signs or slashes.
+/* We do not try to write this whole line at once. We build it like a puzzle from 
+   the inside out:
    
-   Syntax: DATEFROMPARTS(year, month, day)
-     * year: A 4-digit integer (e.g., 2024)
-     * month: An integer from 1 to 12
-     * day: An integer from 1 to 31 (depending on the month) 
-
-   The function requires a Year, Month, and Day to create a valid date object. Since Credit Cards only provide Month and Year, we provide '1' as a 
-   placeholder day (the 1st of the month). This allows the EOMONTH function to then correctly identify the actual last day of that specific month.*/
+   1. THE PROBLEM:
+      We need to find the days until expiry using DATEDIFF(day, GETDATE(), EndDate).
+      But we don't have an 'EndDate' column—only raw numbers for Month and Year.
+      
+   2. STEP-BY-STEP CONSTRUTION:
+      * STEP 1: We use DATEFROMPARTS(ExpYear, ExpMonth, 1) to glue the 
+        numbers into a valid calendar object. We use '1' (the 1st of the month) 
+        as a mandatory placeholder because the function demands a day.
+      * STEP 2: Credit cards expire on the LAST day of the month, 
+        not the first. We wrap our new date inside EOMONTH() to automatically 
+        push the date to the final day (e.g., changing Oct 1st to Oct 31st).
+      * STEP 3: Now that we have a perfect end-date, we drop the whole 
+        package into our DATEDIFF stopwatch to count the days left from today. */
 
 -- 57. Find orders placed in the 2nd Quarter of any year (April, May, June).
 SELECT SalesOrderID, 
@@ -501,7 +584,33 @@ SELECT SalesOrderID,
        DATEPART(quarter, OrderDate) AS QuarterNumber
 FROM Sales.SalesOrderHeader
 WHERE DATEPART(quarter, OrderDate) = 2;
--- DATEPART(quarter, DateColumn) returns an integer (1, 2, 3, or 4) based on the month of the date.
+/* ===============================================================================
+   THE CALENDAR MAP RULE
+   ===============================================================================
+   1. WHAT IT IS:
+      The calendar is not just years and months. SQL Server has hardcoded built-in 
+      knowledge of business and seasonal cycles. The 'quarter' parameter splits 
+      any year into 4 equal segments of 3 months each.
+      
+   2. THE FOUR SEGMENTS:
+      * Quarter 1 = January, February, March
+      * Quarter 2 = April, May, June (Targeted in this challenge)
+      * Quarter 3 = July, August, September
+      * Quarter 4 = October, November, December
+      
+3. THE MASTER INTERVAL REFERENCE SHEET:
+      Interval     | What it extracts     | DATEPART() Output | DATENAME() Output
+      ----------------------------------------------------------------------------
+      year         | Year                 | 2026 (INT)        | '2026' (TEXT)
+      quarter      | Quarter of the year  | 1 to 4 (INT)      | '1' to '4' (TEXT)
+      month        | Month of the year    | 1 to 12 (INT)     | 'June', 'January'
+      day          | Day of the month     | 1 to 31 (INT)     | '1' to '31' (TEXT)
+      dayofyear    | Day of year (Day No) | 1 to 366 (INT)    | '1' to '366' (TEXT)
+      week         | Week of the year     | 1 to 53 (INT)     | '1' to '53' (TEXT)
+      weekday      | Day of the week      | 1 to 7 (INT)      | 'Friday', 'Monday'
+      
+
+   =============================================================================== */
 
 -- 58. Display the HireDate and move it to the "Next Monday" (DATEADD logic).
 SELECT BusinessEntityID, 
