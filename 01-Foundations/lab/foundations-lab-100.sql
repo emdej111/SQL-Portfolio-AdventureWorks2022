@@ -88,7 +88,8 @@ SELECT * FROM Person.Person WHERE MiddleName LIKE '_.';
 
 -- 21. Concatenate FirstName, MiddleName, and LastName (handle NULLs using COALESCE).
 SELECT * FROM Person.Person;
-SELECT FirstName + ' ' + COALESCE(MiddleName + ' ', '') + LastName AS FullDisplayName FROM Person.Person;
+SELECT CONCAT(FirstName, ' ', COALESCE(MiddleName, ''), ' ', LastName) AS FullDisplayName
+FROM Person.Person;
 /* DEFINITIONS:
    1. CONCATENATION (+): 
 	  In T-SQL, the '+' operator joins strings together. 
