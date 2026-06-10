@@ -130,8 +130,7 @@ FROM HumanResources.Employee
 SELECT LEFT(Comments, 15) AS fifteen FROM Production.ProductReview;
 
 -- 25. Find the length of the longest PasswordHash in the Person.Password table.
-SELECT PasswordHash, 
-	   MAX(LEN(PasswordHash)) AS passLength 
+SELECT MAX(LEN(PasswordHash)) AS passLength 
 FROM Person.Password;
 /* The LEN function returns the number of characters in a string, excluding trailing spaces. It is vital for data validation, such as 
    checking if passwords or identifiers meet specific length requirements.
