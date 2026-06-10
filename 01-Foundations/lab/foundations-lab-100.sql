@@ -132,10 +132,29 @@ SELECT LEFT(Comments, 15) AS fifteen FROM Production.ProductReview;
 -- 25. Find the length of the longest PasswordHash in the Person.Password table.
 SELECT MAX(LEN(PasswordHash)) AS passLength 
 FROM Person.Password;
-/* The LEN function returns the number of characters in a string, excluding trailing spaces. It is vital for data validation, such as 
-   checking if passwords or identifiers meet specific length requirements.
-   To find the "longest" value, we wrap LEN() inside the MAX() function. 
-   MAX() is an aggregate function that looks at all the results of LEN() across all rows and picks the highest number */
+
+-- or
+
+SELECT PasswordHash,
+	   MAX(LEN(PasswordHash)) AS passLength 
+FROM Person.Password
+GROUP By PasswordHash;
+
+/* ===============================================================================
+   THE GOLDEN RULE OF AGGREGATION ("Mixed Company" Rule)
+   ===============================================================================
+   When writing a SELECT statement with aggregate functions, look at the columns:
+   
+   1. PURE AGGREGATES (No GROUP BY needed):
+      If the SELECT list contains ONLY aggregate functions (e.g., SUM, AVG, MAX), 
+      the SQL engine treats the entire table as one single group. No GROUP BY is required.
+      
+   2. MIXED COMPANY (GROUP BY is MANDATORY):
+      The exact moment we add a regular row/column (like PatientID or City) alongside 
+      an aggregate function, ywe create a conflict of detail levels. 
+      To resolve this, that regular column MUST be placed inside the GROUP BY clause. 
+      It tells SQL exactly how to slice and dice the data into categorized buckets.
+   =============================================================================== */
 
 -- 26. Convert the AccountNumber in Sales.Customer to lowercase.
 SELECT LOWER(AccountNumber) AS lowcaseAccNum
