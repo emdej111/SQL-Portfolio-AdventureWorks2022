@@ -197,7 +197,7 @@ SELECT ProductID,
        Name,
        SQUARE(ListPrice) AS squarePrice
 FROM Production.Product;
-/* The SQUARE function returns the square of a given numeric value (n raised to the power of 2) */
+/* The SQUARE function mu tiplies a number by itself (e.g., 5 squared is 5 x 5 = 25). */
 
 -- 30. Display LastName and the lowercase version of LastName side-by-side.
 SELECT * FROM Person.Person;
@@ -248,31 +248,66 @@ SELECT * FROM Production.Product;
 SELECT ProductNumber,
        RTRIM(ProductNumber) AS CleanedProductNumber 
 FROM Production.Product;
-/* RTRIM(string_expression) removes all blank spaces from the RIGHT side of a string
-   LTRIM(string_expression) does the same for the LEFT side
-   TRIM(string_expression) removes spaces from BOTH sides (available in newer SQL versions) */
+/* To understand why we need RTRIM, we must look at how SQL stores text:
+   
+   1. VARCHAR(10) [Variable Character]: 
+      Dynamic storage. If we input 'HR', it takes exactly 2 spaces. 
+      No wasted space, no hidden characters.
+      
+   2. CHAR(10) [Fixed Character]: 
+      Fixed-size storage. If we input 'HR', SQL Server MANDATORILY pads the remaining 
+      8 spaces with invisible blanks to fill the definition. 
+      The database literally stores it as 'HR        '.
+      
+   THE PROBLEM:
+   If we try to filter a CHAR(10) column using: WHERE CountryCode = 'HR'
+   The query will FAIL because 'HR' is mathematically not equal to 'HR        '.
+   
+   THE SOLUTION:
+   We use RTRIM(CountryCode) to temporarily "shave off" those database-generated 
+   trailing spaces so our string comparisons work perfectly.
+
+   - LTRIM cuts the left side.
+   - RTRIM cuts the right side.
+   - TRIM cuts both sides at once
+ */
 
 -- 38. Extract the Year from HireDate using SUBSTRING (treat date as string).
 SELECT HireDate,
        SUBSTRING(CAST(HireDate AS VARCHAR), 1, 4) AS YearFromSubstring        
 FROM HumanResources.Employee;
-/* The SUBSTRING function is designed for text (strings). Since 'HireDate' is a Date type, we must first "convert" it into a string (VARCHAR) using CAST.
-
-   LOGIC:
-   1. CAST(HireDate AS VARCHAR): Changes 2026-02-05 (Date) -> "2026-02-05" (Text)
-   2. SUBSTRING(..., 1, 4): Starts at the 1st character and takes the first 4 digits
-
-   CAST(expression AS target_type):
-     * expression: The data you are changing (HireDate)
-     * target_type: What it becomes (VARCHAR for text) */
+/* ===============================================================================
+   THE SUBSTRING() "TEXT SCISSORS" RULE
+   ===============================================================================
+   What it is:
+   SUBSTRING is a string-slicing tool. It functions like a pair of precise scissors 
+   designed to cut out a specific piece of text and discard the rest.
+   
+   How the parameters work:
+   SUBSTRING(text_source, start_position, length_to_cut)
+   
+   * text_source:    The string we want to slice (e.g., '2026-06-10').
+   * start_position: The exact character index where the scissors start cutting (1 = first letter).
+   * length_to_cut:  How many characters to move and keep to the right from the starting point.
+   
+   Why CAST is used here:
+   Because SUBSTRING only knows how to cut text (VARCHAR). Since HireDate is a native 
+   DATE object, CAST(HireDate AS VARCHAR) must first convert the calendar object into 
+   the text format '2026-06-10' so the scissors can safely do their job and extract '2026' */
 
 -- 39. Calculate the Absolute (ABS) difference between the Bonus and CommissionPct.
 SELECT ABS(CommissionPct - Bonus) AS AbsoluteDifference FROM Sales.SalesPerson;
-/* The ABS(numeric_expression) function returns the absolute (positive) value of a specified numeric expression. It essentially removes the 
-   minus sign from any negative result.
-
-   We use ABS here because we want to know the "distance" or "gap" between Bonus and CommissionPct. 
-   Without ABS, if CommissionPct is smaller than Bonus, we would get a negative number, which is often confusing in business reports */
+/* ===============================================================================
+   THE ABS() FUNCTION (The Minus Destroyer)
+   ===============================================================================
+   1. WHAT IT DOES:
+      ABS stands for Absolute Value. It simply deletes the minus sign from any 
+      negative number, turning it positive. Positive numbers remain unchanged.
+      E.g., ABS(-25) -> 25  and  ABS(25) -> 25.
+      
+   2. WHY WE USE IT (The Distance Concept):
+      We use ABS when we only care about the "distance" or "gap" between two numbers, 
+      regardless of which one is bigger */
 
 -- 40. Create a label: "Vendor: [Name] - Rating: [CreditRating]".
 SELECT * FROM Purchasing.Vendor;
@@ -294,6 +329,15 @@ SELECT OrderDate,
 	   ShipDate,
 	   DATEDIFF(minute, OrderDate, ShipDate) AS MinutesToShip
 FROM Sales.SalesOrderHeader;
+/* WHAT IT DOES:
+      DATEDIFF stands for Date Difference. It acts as a digital stopwatch that 
+      calculates the exact temporal distance between two timestamps.
+      
+   SYNTAX STRUCTURE:
+      DATEDIFF(unit, start_date, end_date)
+      * unit: The measurement unit we want (year, month, day, hour, minute, second).
+      * start_date: When the stopwatch starts.
+      * end_date: When the stopwatch stops */
 
 -- 42. Retrieve all sales orders that were placed on a Friday (DATENAME).
 SELECT SalesOrderID, 
@@ -302,8 +346,19 @@ SELECT SalesOrderID,
 FROM Sales.SalesOrderHeader
 WHERE DATENAME(weekday, OrderDate) = 'Friday';
 -- The DATENAME(interval, date) function returns a character string that represents the specified part of a date (e.g., Year, Month, Weekday)
+/* WHAT IT DOES:
+      DATENAME extracts a specific part of a date and returns it as a localized 
+      text string (a word) rather than a number.
+      E.g., DATENAME(weekday, '2026-06-12') -> 'Friday'
+            DATENAME(month, '2026-06-12')   -> 'June'
+            
+   THE WHERE CLAUSE TIMING TRAP:
+      We cannot write: WHERE DayName = 'Friday'. 
+      Why? Because SQL executes the WHERE filter BEFORE it executes the SELECT list. 
+      Since the alias 'DayName' does not exist yet when the database is filtering, 
+      we must repeat the full DATENAME() function inside the WHERE clause */
 
--- 43. Add exactly 100 days to the current system date (GETDATE).
+-- 43. Add exactly 100 days to the current system date (GETDATE). 
 SELECT DATEADD(day, 100, GETDATE()) AS DateIn100Days;
 -- The DATEADD(interval, number, date) function adds a specific numerical value to a date part (interval) of an existing date
 
