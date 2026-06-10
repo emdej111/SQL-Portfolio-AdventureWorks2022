@@ -164,17 +164,26 @@ FROM Sales.Customer;
 SELECT Freight,
        ROUND(Freight, -1) AS RoundedFreight
 FROM Sales.SalesOrderHeader;
-/* The ROUND(numeric_expression, length) function rounds a value to a specified precision.
-
-   WHY THE NEGATIVE NUMBER (-1)?
-    1. Positive length: Rounds to the RIGHT of the decimal point (fractions).
-    2. Zero length: Rounds to the nearest integer.
-    3. Negative length: Rounds to the LEFT of the decimal point (tens, hundreds).
-
-   RULES FOR NEGATIVE VALUES:
-    * Use -1 to round to the nearest 10 (makes the last digit 0).
-    * Use -2 to round to the nearest 100 (makes the last two digits 0).
-    * Use -3 to round to the nearest 1000, and so on. */
+/* ===============================================================================
+   THE "COUNTING ZEROS" RULE FOR NEGATIVE ROUNDING
+   ===============================================================================
+   The ROUND(value, precision) function uses the decimal point as the baseline (0).
+   
+   1. POSITIVE PRECISION (Right of decimal):
+      Rounds into fractional data (cents/decimals). 
+      E.g., ROUND(123.456, 2) -> 123.46
+      
+   2. NEGATIVE PRECISION (Left of decimal):
+      Rounds into whole, macro numbers (tens, hundreds, thousands).
+      
+   MEMORY TRICK - "Count the Zeros":
+   WE have to Think of the negative number as the number of trailing zeros we want to force 
+   at the end of our integer:
+   
+   * To the nearest 10    (1 zero  -> '10')   -> Use -1  (e.g., 123.45 becomes 120)
+   * To the nearest 100   (2 zeros -> '100')  -> Use -2  (e.g., 123.45 becomes 100)
+   * To the nearest 1000  (3 zeros -> '1000') -> Use -3  (e.g., 1234.5 becomes 1000)
+   =============================================================================== */
 
 -- 28. Display the first 6 digits of CardNumber followed by 'XXXX-XXXX'.
 SELECT * FROM Sales.CreditCard;
