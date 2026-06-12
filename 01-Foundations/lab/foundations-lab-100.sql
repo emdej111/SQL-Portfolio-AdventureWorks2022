@@ -311,6 +311,8 @@ SELECT ABS(CommissionPct - Bonus) AS AbsoluteDifference FROM Sales.SalesPerson;
 
 -- 40. Create a label: "Vendor: [Name] - Rating: [CreditRating]".
 SELECT * FROM Purchasing.Vendor;
+SELECT CONCAT('Vendor: ', Name, ' - Rating: ', CreditRating) FROM Purchasing.Vendor;
+-- or
 SELECT Name, 
        CreditRating, 
        'Vendor: ' + Name + ' - Rating: ' + CAST(CreditRating AS VARCHAR) AS VendorLabel
@@ -584,10 +586,7 @@ SELECT SalesOrderID,
        DATEPART(quarter, OrderDate) AS QuarterNumber
 FROM Sales.SalesOrderHeader
 WHERE DATEPART(quarter, OrderDate) = 2;
-/* ===============================================================================
-   THE CALENDAR MAP RULE
-   ===============================================================================
-   1. WHAT IT IS:
+/* 1. WHAT IT IS:
       The calendar is not just years and months. SQL Server has hardcoded built-in 
       knowledge of business and seasonal cycles. The 'quarter' parameter splits 
       any year into 4 equal segments of 3 months each.
@@ -618,11 +617,20 @@ SELECT BusinessEntityID,
        DATENAME(weekday, HireDate) AS HireDay,
        DATEADD(week, DATEDIFF(week, 0, HireDate) + 1, 0) AS NextMonday
 FROM HumanResources.Employee;
-/* SQL Server's base date '0' is Monday, January 1st, 1900.
-   
-   1. DATEDIFF(week, 0, HireDate): Calculates how many full weeks have passed since that original Monday
-   2. + 1: Increases the week count by one to move into the upcoming week
-   3. DATEADD(week, ..., 0): Adds that total number of weeks back to the original Monday (0), effectively landing on the next Monday in the calendar */
+/* 1. PURPOSE:
+      Adds or subtracts a specified time interval (days, months, years) to/from 
+      a starting date. SQL automatically handles varying month lengths and leap years.
+      
+   2. SYNTAX:
+      DATEADD(datepart, number, start_date)
+      
+   3. DIRECTION CONTROL:
+      * Positive numbers move FORWARD into the future: DATEADD(day, 30, GETDATE())
+      * Negative numbers move BACKWARD into the past:   DATEADD(month, -6, GETDATE())
+      
+   4. COMMON INTERVALS (datepart):
+      * year, quarter, month, day, week, hour, minute, second
+   =============================================================================== */
 
 -- 59. Extract the Birth Year of employees as a numeric value (YEAR).
 SELECT BusinessEntityID, 
@@ -637,6 +645,7 @@ SELECT SalesOrderID,
 FROM Sales.SalesOrderHeader
 WHERE DATEPART(hour, OrderDate) >= 12
 ORDER BY OrderHour;
+-- It can be executed without ORDER BY as well. 
 
 -- ============================================================================
 -- LEVEL 4: ANALYTICS, AGGREGATIONS & HAVING (61 - 80)
@@ -695,6 +704,18 @@ GROUP BY Class;
      3. WHERE Class IS NOT NULL: Removes products that don't have a defined class */
 
 -- 66. Find Departments that have an average VacationHours greater than 50.
+SELECT * FROM HumanResources.Employee;
+SELECT * FROM HumanResources.Department;
+SELECT * FROM HumanResources.EmployeeDepartmentHistory;
+
+-- 1.step 
+SELECT * FROM HumanResources.Employee e
+JOIN HumanResources.EmployeeDepartmentHistory edh 
+    ON e.BusinessEntityID = edh.BusinessEntityID
+JOIN HumanResources.Department d 
+    ON edh.DepartmentID = d.DepartmentID;
+ 
+-- 2.step 
 SELECT d.Name AS DepartmentName, 
        AVG(e.VacationHours) AS AverageVacation
 FROM HumanResources.Employee e
@@ -705,6 +726,7 @@ JOIN HumanResources.Department d
 WHERE edh.EndDate IS NULL
 GROUP BY d.Name
 HAVING AVG(e.VacationHours) > 50;
+
 /* LOGIC: 
      1. JOIN three tables to connect Employees to their Department names
      2. GROUP BY Department Name
@@ -750,10 +772,23 @@ SELECT City,
 FROM Person.Address
 GROUP BY City
 HAVING COUNT(*) = 1;
-/* LOGIC: 
-     1. GROUP BY City: Groups all addresses by their city name
-     2. COUNT(*): Counts how many address records exist in each city
-     3. HAVING COUNT(*) = 1: Filters the groups to show only those where the count is exactly one */
+/* 1. THE CRITICAL DIFFERENCE (WHERE vs. HAVING):
+      * WHERE filters raw, individual rows BEFORE they are grouped. It cannot see 
+        or filter aggregated math like COUNT(*), SUM(), or AVG().
+      * HAVING filters aggregated groups AFTER the GROUP BY clause has successfully 
+        collapsed the rows into buckets.
+        
+   2. WHY WHERE FAILS HERE:
+      If we try to write: WHERE COUNT(*) = 1, SQL Server will crash. At the 
+      WHERE stage, the database is looking at single addresses and does not yet 
+      know how many total addresses exist per city.
+      
+   3. THE PIPELINE EXECUTION:
+      * STEP 1: GROUP BY City -> Groups all raw addresses into city-specific buckets.
+      * STEP 2: COUNT(*) -> Counts the total number of records inside each finished bucket.
+      * STEP 3: HAVING COUNT(*) = 1 -> Acts as a post-processing filter, inspecting 
+        the final count of each bucket and throwing away any city that doesn't have 
+        exactly 1 address. */
 
 -- 71. Sum the Bonus amounts for each JobTitle in HumanResources.Employee.
 SELECT e.JobTitle, 
