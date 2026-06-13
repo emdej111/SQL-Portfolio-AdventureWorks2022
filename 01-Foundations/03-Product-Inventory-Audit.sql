@@ -22,8 +22,13 @@ SELECT ProductID,
 	   SafetyStockLevel
 FROM Production.Product
 WHERE SafetyStockLevel BETWEEN 500 AND 1000 
-AND (Name LIKE '%Mountain%' OR Name LIKE '%Road%') --Without parentheses, SQL prioritizes the AND operator, which would incorrectly apply the stock filter ONLY to Mountain bikes. I used parentheses to wrap the 'OR' conditions. This forces SQL to treat both bike types as a single group before checking the SafetyStockLevel constraint.
+AND (Name LIKE '%Mountain%' OR Name LIKE '%Road%') 
 ORDER BY SafetyStockLevel ASC;
+
+/* When combining AND/OR operators, SQL server prioritizes AND. 
+   Parentheses are required here to force the OR group to be evaluated 
+   as a single logic unit before the AND filter is applied. */
+
 
 /* LOGIC EXPLANATION:
    1. DATA SOURCE: 
