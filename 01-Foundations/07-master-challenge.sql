@@ -32,11 +32,17 @@ SELECT * FROM Sales.SalesOrderHeader soh JOIN Purchasing.ShipMethod sm ON soh.Sh
 
 SELECT sm.[Name] AS ShippingMethodName,
        ROUND(SUM(soh.Freight), 2) AS TotalFreightCost,
-       COUNT(CASE WHEN DATEDIFF(DAY, DueDate, ShipDate) > 5 THEN 1 END) AS CriticalDelayCount
+       COUNT(CASE 
+               WHEN DATEDIFF(DAY, DueDate, ShipDate) > 5 
+               THEN 1 
+             END) AS CriticalDelayCount
 FROM Sales.SalesOrderHeader soh 
 JOIN Purchasing.ShipMethod sm ON soh.ShipMethodID = sm.ShipMethodID
 GROUP BY sm.[Name]
-HAVING COUNT(CASE WHEN DATEDIFF(DAY, DueDate, ShipDate) > 5 THEN 1 END) > 0
+HAVING COUNT(CASE 
+               WHEN DATEDIFF(DAY, DueDate, ShipDate) > 5 
+               THEN 1 
+             END) > 0
 ORDER BY TotalFreightCost DESC;
 
 /* LOGIC EXPLANATION:
